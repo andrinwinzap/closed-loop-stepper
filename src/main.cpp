@@ -115,8 +115,8 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
   const float Kp = 10.0;
   const float Kv = 10.0;
 
-  const int control_loop_frequency = 10000; // Control loop frequency in Hz
-  const int serial_print_frequency = 5; // Serial print frequency in Hz
+  const int control_loop_frequency = 500; // Control loop frequency in Hz
+  const int serial_print_frequency = 100; // Serial print frequency in Hz
 
   unsigned long start_time = millis();
   unsigned long last_control = millis();
