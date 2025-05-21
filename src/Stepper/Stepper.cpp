@@ -14,7 +14,7 @@ void Stepper::begin() {
 
   digitalWrite(stepPin, LOW);
   digitalWrite(dirPin, LOW);
-  digitalWrite(enPin, LOW);
+  digitalWrite(enPin, HIGH);
 
   instance = this;
   timer = timerBegin(0, 80, true); // 1 µs resolution
@@ -30,22 +30,26 @@ void Stepper::setSpeed(float radPerSec) {
   }
 
   if (radPerSec == 0.0f) {
-    timerAlarmDisable(timer);
     digitalWrite(stepPin, LOW);
+    currentFrequency = 0;
+    if (isRunning) {
+      stop();
+    }
     return;
   }
 
   if (radPerSec > 0) {
     digitalWrite(dirPin, HIGH);
+    direction = true;
   } else {
     digitalWrite(dirPin, LOW);
-    radPerSec = -radPerSec;
+    direction = false;
   }
 
-  currentFrequency = float(radPerSec * stepsPerRev * microsteps) / float(2 * PI);
+  currentFrequency = float(abs(radPerSec) * stepsPerRev * microsteps) / float(2 * PI);
   updateTimer();
-  timerAlarmEnable(timer);
 }
+
 
 void Stepper::enable() {
   digitalWrite(enPin, LOW);
@@ -74,22 +78,61 @@ void Stepper::updateTimer() {
 
 void Stepper::setMicrosteps(uint8_t microsteps) {
   this->microsteps = microsteps;
-  if (currentFrequency > 0) {
-    updateTimer();
-  }
+  updateTimer();
 }
 
 void Stepper::setStepsPerRevolution(uint16_t stepsPerRevolution) {
   this->stepsPerRev = stepsPerRevolution;
-  if (currentFrequency > 0) {
-    updateTimer();
-  }
+  updateTimer();
 }
 
 void Stepper::setMaxSpeed(float radPerSec) {
   maxSpeedRadPerSec = fabs(radPerSec);
 }
 
-void Stepper::setMaxAcceleration(float radPerSec2) {
-  maxAccelRadPerSec2 = fabs(radPerSec2);
+void Stepper::move(float angleRad) {
+  if (angleRad == 0.0f) return;
+
+  // Determine direction
+  digitalWrite(dirPin, angleRad > 0 ? HIGH : LOW);
+  float absAngle = fabs(angleRad);
+
+  // Calculate number of steps
+  uint32_t steps = (uint32_t)((absAngle / (2.0f * PI)) * stepsPerRev * microsteps);
+
+  // Calculate delay per half-cycle (i.e., time between step HIGH-LOW toggles)
+  if (currentFrequency <= 0.0f) {
+    Serial.println("Speed not set. Use setSpeed() before move().");
+    return;
+  }
+  float halfPeriod_us = 500000.0 / currentFrequency;
+
+  if (isRunning) {
+      stop();
+    }
+
+  // Perform the steps
+  for (uint32_t i = 0; i < steps; ++i) {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds((uint32_t)halfPeriod_us);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds((uint32_t)halfPeriod_us);
+  }
 }
+
+void Stepper::start() {
+  if (currentFrequency > 0.0f && !isRunning) {
+    timerAlarmEnable(timer);
+    isRunning = true;
+  }
+}
+
+
+void Stepper::stop() {
+  if (isRunning) {
+    timerAlarmDisable(timer);
+    digitalWrite(stepPin, LOW);  // Ensure step pin is low
+    isRunning = false;
+  }
+}
+

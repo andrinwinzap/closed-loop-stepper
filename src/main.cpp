@@ -83,10 +83,9 @@ void home() {
 
   Serial.println("Starting homing process...");
 
-  stepper.setSpeed(-2*PI);
-  delay(1000);
-
   stepper.setSpeed(2*PI);
+  //stepper.move(-1);
+  stepper.start();
   int counter = 0;
   const int threshold = 10;
   const int interval = 1;
@@ -103,7 +102,7 @@ void home() {
     }
   }
 
-  stepper.setSpeed(0);
+  stepper.stop();
   encoder.resetCumulativeAngle();
 
   delay(1000);
@@ -146,6 +145,8 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
   const int serial_print_interval = 1000/serial_print_frequency;
 
   unsigned long motion_duration = wp2.timestamp - wp1.timestamp;
+
+  stepper.start();
 
   while (true) {
     unsigned long now = millis();
@@ -231,7 +232,7 @@ void execute_motion_profile(const Waypoint* arr, size_t length) {
   for (size_t i = 0; i < length-1; ++i) {
     execute_motion_profile_segment(arr[i], arr[i+1]);
   }
-  stepper.setSpeed(0); // Ensure motor stops
+  stepper.stop(); // Ensure motor stops
 } 
 
 void setup() {

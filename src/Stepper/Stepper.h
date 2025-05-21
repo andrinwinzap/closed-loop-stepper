@@ -7,13 +7,17 @@ public:
           uint16_t stepsPerRevolution = 200, uint8_t microsteps = 1);
 
   void begin();
-  void setSpeed(float radPerSec); // Set angular speed in radians/sec
   void enable();                  // Enable driver
   void disable();                 // Disable driver
+  void setSpeed(float radPerSec); // Set angular speed in radians/sec
   void setMicrosteps(uint8_t microsteps);
   void setStepsPerRevolution(uint16_t stepsPerRevolution);
   void setMaxSpeed(float radPerSec);           // Set max angular speed
-  void setMaxAcceleration(float radPerSec2);   // Set max angular acceleration
+  void move(float angleRad);
+  void start();  // Start continuous stepping at current speed
+  void stop();   // Stop continuous stepping
+
+
 
 private:
   uint8_t stepPin, dirPin, enPin;
@@ -21,7 +25,9 @@ private:
   uint8_t microsteps;
   float currentFrequency = 0;
   float maxSpeedRadPerSec = 100.0f;           // Default max speed
-  float maxAccelRadPerSec2 = 100.0f;          // Default max acceleration
+  bool isRunning = false;
+  bool direction = true; // true = HIGH (forward), false = LOW (reverse)
+
 
   hw_timer_t* timer = nullptr;
   portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
