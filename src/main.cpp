@@ -131,7 +131,10 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
     unsigned long now = millis();
     unsigned long elapsed = now - start_time;
 
-    if (elapsed > motion_duration) break;
+    if (elapsed >= motion_duration) {
+      stepper.setSpeed(wp2.velocity * GEAR_RATIO);
+      break;
+    }
 
     if (now - last_control >= control_interval) {
       float desired_pos = hermiteInterpolate(wp1, wp2, elapsed);
@@ -174,8 +177,6 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
       last_control = now;
     }
   }
-  
-  stepper.setSpeed(wp2.velocity);
 
   Serial.print("Position after motion: ");
   Serial.println(encoder.getCumulativeAngle());
