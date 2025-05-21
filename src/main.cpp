@@ -110,7 +110,7 @@ void home() {
   Serial.println("Finished homing");
 }
 
-void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
+void execute_trajectory_segment(const Waypoint &wp1, const Waypoint &wp2) {
 
   ////////////////////////////////////////////////////////
 
@@ -224,13 +224,13 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
 
   if (stalled) {
     Serial.print("New motion profile started");
-    execute_motion_profile_segment(new_start, wp2);
+    execute_trajectory_segment(new_start, wp2);
   }
 }
 
-void execute_motion_profile(const Waypoint* arr, size_t length) {
+void execute_trajectory(const Waypoint* arr, size_t length) {
   for (size_t i = 0; i < length-1; ++i) {
-    execute_motion_profile_segment(arr[i], arr[i+1]);
+    execute_trajectory_segment(arr[i], arr[i+1]);
   }
   stepper.stop(); // Ensure motor stops
 } 
@@ -258,7 +258,7 @@ void setup() {
   
   home();
 
-  Waypoint motion[] = {
+  Waypoint trajectory[] = {
   Waypoint {
                       0,
                       0,
@@ -271,7 +271,7 @@ void setup() {
                     }
                   };
   unsigned long motion_start_time = millis();
-  execute_motion_profile(motion, 2);
+  execute_trajectory(trajectory, 2);
   Serial.print("Motion Duration: ");
   Serial.println(millis() - motion_start_time);
 }
