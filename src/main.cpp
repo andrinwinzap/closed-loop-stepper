@@ -111,8 +111,9 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
   Serial.println(encoder.getCumulativeAngle());
 
   // PID Parameters
-  const float Kp = 10;
-  const float Kv = 10;
+  const float Kf = 1.0;
+  const float Kp = 10.0;
+  const float Kv = 10.0;
 
   const int control_loop_frequency = 10000; // Control loop frequency in Hz
   const int serial_print_frequency = 5; // Serial print frequency in Hz
@@ -151,7 +152,7 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
       float pos_error = desired_pos - measured_pos;
       float vel_error = desired_vel - filtered_vel;
 
-      float control_speed = desired_vel + Kp * pos_error;
+      float control_speed = Kf * desired_vel + Kp * pos_error;
 
 
       if (millis() - last_serial_print > serial_print_interval) {
