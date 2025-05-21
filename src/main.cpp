@@ -113,7 +113,7 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
   // PID Parameters
   const float Kf = 1.0;
   const float Kp = 10.0;
-  const float Kv = 10.0;
+  const float Kv = 1.0;
 
   const int control_loop_frequency = 500; // Control loop frequency in Hz
   const int serial_print_frequency = 100; // Serial print frequency in Hz
@@ -154,7 +154,7 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
       float pos_error = desired_pos - measured_pos;
       float vel_error = desired_vel - filtered_vel;
 
-      float control_speed = Kf * desired_vel + Kp * pos_error;
+      float control_speed = Kf * desired_vel + Kp * pos_error + Kv * vel_error;
 
 
       if (millis() - last_serial_print > serial_print_interval) {
@@ -230,16 +230,11 @@ void setup() {
                     },
   Waypoint {
                       2*PI,
-                      1,
-                      10000
-                    },
-  Waypoint {
-                      4*PI,
                       0,
-                      20000
+                      5000
                     }
                   };
-  execute_motion_profile(motion, 3);
+  execute_motion_profile(motion, 2);
 }
 
 void loop() {
