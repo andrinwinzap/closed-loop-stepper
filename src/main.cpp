@@ -106,6 +106,7 @@ void home() {
 }
 
 void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
+  unsigned long motion_segment_start_time = millis();
 
   Serial.print("Position before motion: ");
   Serial.println(encoder.getCumulativeAngle());
@@ -213,6 +214,9 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
   Serial.print("Position after motion: ");
   Serial.println(encoder.getCumulativeAngle());
 
+  Serial.print("Motion Segment Duration: ");
+  Serial.println(millis() - motion_segment_start_time);
+
   if (stalled) {
     Serial.print("New motion profile started");
     execute_motion_profile_segment(new_start, wp2);
@@ -265,7 +269,10 @@ void setup() {
                       5000
                     }
                   };
+  unsigned long motion_start_time = millis();
   execute_motion_profile(motion, 2);
+  Serial.print("Motion Duration: ");
+  Serial.println(millis() - motion_start_time);
 }
 
 void loop() {
