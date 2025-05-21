@@ -1,0 +1,92 @@
+#include "AS5600.h"
+
+#define TWO_PI 6.28318530718
+
+AS5600::AS5600(TwoWire &wirePort, uint8_t address)
+    : _wire(&wirePort), _address(address) {}
+
+bool AS5600::begin() {
+    _wire->begin();
+    _lastUpdate = millis();
+    _lastAngle = getRadians();  // Initialize angle state
+    return true;
+}
+
+uint8_t AS5600::read8(uint8_t reg) {
+    _wire->beginTransmission(_address);
+    _wire->write(reg);
+    _wire->endTransmission(false);
+    _wire->requestFrom(_address, (uint8_t)1);
+    if (_wire->available()) {
+        return _wire->read();
+    }
+    return 0;
+}
+
+uint16_t AS5600::read12bit(uint8_t regHigh) {
+    _wire->beginTransmission(_address);
+    _wire->write(regHigh);
+    _wire->endTransmission(false);
+    _wire->requestFrom(_address, (uint8_t)2);
+    if (_wire->available() < 2) {
+        return 0;
+    }
+    uint8_t high = _wire->read();
+    uint8_t low = _wire->read();
+    return ((high << 8) | low) & 0x0FFF;
+}
+
+uint16_t AS5600::getRawAngle() {
+    return read12bit(0x0E);
+}
+
+float AS5600::rawToRadians(uint16_t raw) {
+    return (raw * TWO_PI) / 4096.0;
+}
+
+float AS5600::getRadians() {
+    return rawToRadians(getRawAngle());
+}
+
+void AS5600::update() {
+    float current = getRadians();
+    unsigned long now = millis();
+    float delta = current - _lastAngle;
+
+    // Handle rollover
+    if (delta > PI) {
+        delta -= TWO_PI;
+    } else if (delta < -PI) {
+        delta += TWO_PI;
+    }
+
+    _cumulativeAngle += delta;
+
+    float dt = (now - _lastUpdate) / 1000.0;  // seconds
+    if (dt > 0) {
+        _velocity = delta / dt;
+    }
+
+    _lastAngle = current;
+    _lastUpdate = now;
+}
+
+float AS5600::getCumulativeAngle() {
+    update();
+    return _cumulativeAngle;
+}
+
+float AS5600::getVelocity() {
+    return _velocity;
+}
+
+bool AS5600::magnetDetected() {
+    uint8_t status = read8(0x0B);
+    return (status & (1 << 5)) != 0;
+}
+
+void AS5600::resetCumulativeAngle() {
+    _cumulativeAngle = 0.0;
+    _lastAngle = getRadians();
+}
+
