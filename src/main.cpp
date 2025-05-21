@@ -118,7 +118,7 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
   const int serial_print_frequency = 5; // Serial print frequency in Hz
 
   unsigned long start_time = millis();
-  unsigned long last_control = 0;
+  unsigned long last_control = millis();
   unsigned long last_serial_print = 0;
   float last_control_speed = 0;
   
