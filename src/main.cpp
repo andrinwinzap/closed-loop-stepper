@@ -81,6 +81,8 @@ float hermiteVelocity(const Waypoint &wp1,
 
 void home() {
 
+  Serial.println("Starting homing process...");
+
   stepper.setSpeed(-2*PI);
   delay(1000);
 
@@ -103,33 +105,40 @@ void home() {
 
   stepper.setSpeed(0);
   encoder.resetCumulativeAngle();
+
+  delay(1000);
+
+  Serial.println("Finished homing");
 }
 
 void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
-  unsigned long motion_segment_start_time = millis();
 
-  Serial.print("Position before motion: ");
-  Serial.println(encoder.getCumulativeAngle());
+  ////////////////////////////////////////////////////////
 
-  // PID Parameters
-  const float Kf = 1.0;
-  const float Kp = 10.0;
-  const float Kv = 1.0;
+  const float Kf = 1.0; // Velocity feed forward gain
+  const float Kp = 10.0; // Proportional gain
+  const float Kv = 1.0; // Derivative gain
 
   const int control_loop_frequency = 500; // Control loop frequency in Hz
   const int serial_print_frequency = 100; // Serial print frequency in Hz
 
-  unsigned long start_time = millis();
-  unsigned long last_control = millis();
-  unsigned long last_serial_print = 0;
+  float vel_filter_alpha = 0.1f; // Velocity low pass filter alpha
+
+  const float stall_vel_threshold = 0.1f; // Stalling velocity threshold
+  const float stall_pos_error_threshold = 0.1f; // Stalling position-error threshold
+  const int stall_time_threshold = 50; // Minimal duration for stalling detection
+
+  ////////////////////////////////////////////////////////
+  
+  unsigned long now = millis();
+  unsigned long motion_segment_start_time = now;
+
+  unsigned long last_control_loop_timestamp = now;
+  unsigned long last_serial_print_timestamp = now;
   float last_control_speed = 0;
-  float filtered_vel = 0;
-  float vel_filter_alpha = 0.1f;
+  float filtered_vel = encoder.getVelocity() / float(GEAR_RATIO);
 
   bool stalled = false;
-  const float stall_vel_threshold = 0.1f;
-  const float stall_pos_error_threshold = 0.1f;
-  const int stall_time_threshold = 50;
   unsigned long stall_start_time = 0;
   Waypoint new_start = wp1;
   
@@ -138,18 +147,16 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
 
   unsigned long motion_duration = wp2.timestamp - wp1.timestamp;
 
-  filtered_vel = encoder.getVelocity() / float(GEAR_RATIO);
-
   while (true) {
     unsigned long now = millis();
-    unsigned long elapsed = now - start_time;
+    unsigned long elapsed = now - motion_segment_start_time;
 
     if (elapsed >= motion_duration) {
       stepper.setSpeed(wp2.velocity * GEAR_RATIO);
       break;
     }
 
-    if (now - last_control >= control_interval) {
+    if (now - last_control_loop_timestamp >= control_interval) {
 
       float desired_pos = hermiteInterpolate(wp1, wp2, elapsed);
       float desired_vel = hermiteVelocity   (wp1, wp2, elapsed);
@@ -183,7 +190,7 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
       float control_speed = Kf * desired_vel + Kp * pos_error + Kv * vel_error;
 
 
-      if (millis() - last_serial_print > serial_print_interval) {
+      if (millis() - last_serial_print_timestamp > serial_print_interval) {
         Serial.print("Position: ");
         Serial.print(measured_pos);
         Serial.print(" | ");
@@ -199,7 +206,7 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
         Serial.print("Control Speed: ");
         Serial.println(control_speed);
 
-        last_serial_print = millis();
+        last_serial_print_timestamp = millis();
       }
 
       if (control_speed != last_control_speed){
@@ -207,12 +214,9 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
         last_control_speed = control_speed;
       }
 
-      last_control = now;
+      last_control_loop_timestamp = now;
     }
   }
-
-  Serial.print("Position after motion: ");
-  Serial.println(encoder.getCumulativeAngle());
 
   Serial.print("Motion Segment Duration: ");
   Serial.println(millis() - motion_segment_start_time);
@@ -227,7 +231,7 @@ void execute_motion_profile(const Waypoint* arr, size_t length) {
   for (size_t i = 0; i < length-1; ++i) {
     execute_motion_profile_segment(arr[i], arr[i+1]);
   }
-  stepper.setSpeed(0);
+  stepper.setSpeed(0); // Ensure motor stops
 } 
 
 void setup() {
@@ -252,10 +256,6 @@ void setup() {
   pinMode(HALL_PIN, INPUT_PULLUP);
   
   home();
-
-  Serial.println("Homing done");
-
-  delay(2000);
 
   Waypoint motion[] = {
   Waypoint {
