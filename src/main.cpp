@@ -130,6 +130,8 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
 
   unsigned long motion_duration = wp2.timestamp - wp1.timestamp;
 
+  filtered_vel = encoder.getVelocity() / float(GEAR_RATIO);
+
   while (true) {
     unsigned long now = millis();
     unsigned long elapsed = now - start_time;
