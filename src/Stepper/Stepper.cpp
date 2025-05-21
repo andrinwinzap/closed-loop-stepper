@@ -22,24 +22,30 @@ void Stepper::begin() {
 }
 
 void Stepper::setSpeed(float radPerSec) {
+  // Clamp to max speed
+  if (radPerSec > maxSpeedRadPerSec) {
+    radPerSec = maxSpeedRadPerSec;
+  } else if (radPerSec < -maxSpeedRadPerSec) {
+    radPerSec = -maxSpeedRadPerSec;
+  }
+
   if (radPerSec == 0.0f) {
     timerAlarmDisable(timer);
-    digitalWrite(stepPin, LOW); // optional: ensure step pin is low
+    digitalWrite(stepPin, LOW);
     return;
   }
 
   if (radPerSec > 0) {
-    digitalWrite(dirPin, HIGH);  // forward direction
+    digitalWrite(dirPin, HIGH);
   } else {
-    digitalWrite(dirPin, LOW);   // reverse direction
-    radPerSec = -radPerSec;      // take absolute value for frequency calculation
+    digitalWrite(dirPin, LOW);
+    radPerSec = -radPerSec;
   }
 
   currentFrequency = float(radPerSec * stepsPerRev * microsteps) / float(2 * PI);
   updateTimer();
   timerAlarmEnable(timer);
 }
-
 
 void Stepper::enable() {
   digitalWrite(enPin, LOW);
@@ -66,7 +72,6 @@ void Stepper::updateTimer() {
   timerAlarmWrite(timer, ticks, true);
 }
 
-
 void Stepper::setMicrosteps(uint8_t microsteps) {
   this->microsteps = microsteps;
   if (currentFrequency > 0) {
@@ -79,4 +84,12 @@ void Stepper::setStepsPerRevolution(uint16_t stepsPerRevolution) {
   if (currentFrequency > 0) {
     updateTimer();
   }
+}
+
+void Stepper::setMaxSpeed(float radPerSec) {
+  maxSpeedRadPerSec = fabs(radPerSec);
+}
+
+void Stepper::setMaxAcceleration(float radPerSec2) {
+  maxAccelRadPerSec2 = fabs(radPerSec2);
 }

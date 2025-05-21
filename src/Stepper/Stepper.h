@@ -12,12 +12,16 @@ public:
   void disable();                 // Disable driver
   void setMicrosteps(uint8_t microsteps);
   void setStepsPerRevolution(uint16_t stepsPerRevolution);
+  void setMaxSpeed(float radPerSec);           // Set max angular speed
+  void setMaxAcceleration(float radPerSec2);   // Set max angular acceleration
 
 private:
   uint8_t stepPin, dirPin, enPin;
   uint16_t stepsPerRev;
   uint8_t microsteps;
   float currentFrequency = 0;
+  float maxSpeedRadPerSec = 100.0f;           // Default max speed
+  float maxAccelRadPerSec2 = 100.0f;          // Default max acceleration
 
   hw_timer_t* timer = nullptr;
   portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;

@@ -213,6 +213,7 @@ void setup() {
   stepper.enable(); // keep driver enabled
   stepper.setMicrosteps(32);
   stepper.setStepsPerRevolution(200);
+  stepper.setMaxSpeed(50);
 
   pinMode(HALL_PIN, INPUT_PULLUP);
   
@@ -231,7 +232,7 @@ void setup() {
   Waypoint {
                       2*PI,
                       0,
-                      5000
+                      3000
                     }
                   };
   execute_motion_profile(motion, 2);
