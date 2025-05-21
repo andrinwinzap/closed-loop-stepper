@@ -124,6 +124,13 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
   float last_control_speed = 0;
   float filtered_vel = 0;
   float vel_filter_alpha = 0.1f;
+
+  bool stalled = false;
+  const float stall_vel_threshold = 0.1f;
+  const float stall_pos_error_threshold = 0.1f;
+  const int stall_time_threshold = 50;
+  unsigned long stall_start_time = 0;
+  Waypoint new_start = wp1;
   
   const int control_interval = 1000/control_loop_frequency;
   const int serial_print_interval = 1000/serial_print_frequency;
@@ -142,6 +149,7 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
     }
 
     if (now - last_control >= control_interval) {
+
       float desired_pos = hermiteInterpolate(wp1, wp2, elapsed);
       float desired_vel = hermiteVelocity   (wp1, wp2, elapsed);
 
@@ -149,10 +157,27 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
       float measured_vel = encoder.getVelocity() / float(GEAR_RATIO);
       filtered_vel = vel_filter_alpha * measured_vel + (1 - vel_filter_alpha) * filtered_vel;
 
-      
-
       float pos_error = desired_pos - measured_pos;
       float vel_error = desired_vel - filtered_vel;
+
+      if (filtered_vel < stall_vel_threshold && pos_error > stall_pos_error_threshold) {
+        if (stall_start_time == 0) {
+          stall_start_time = millis();
+        } else {
+          if (millis() - stall_start_time > stall_time_threshold) {
+            stalled = true;
+            Serial.println("STALLED!");
+            new_start = {
+                      encoder.getCumulativeAngle() / float(GEAR_RATIO),
+                      0.0f,
+                      elapsed
+                    };
+            break;
+          }
+        }
+      } else {
+        stall_start_time = 0;
+      }
 
       float control_speed = Kf * desired_vel + Kp * pos_error + Kv * vel_error;
 
@@ -187,6 +212,11 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
 
   Serial.print("Position after motion: ");
   Serial.println(encoder.getCumulativeAngle());
+
+  if (stalled) {
+    Serial.print("New motion profile started");
+    execute_motion_profile_segment(new_start, wp2);
+  }
 }
 
 void execute_motion_profile(const Waypoint* arr, size_t length) {
@@ -232,7 +262,7 @@ void setup() {
   Waypoint {
                       2*PI,
                       0,
-                      3000
+                      5000
                     }
                   };
   execute_motion_profile(motion, 2);
