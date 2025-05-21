@@ -121,6 +121,8 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
   unsigned long last_control = millis();
   unsigned long last_serial_print = 0;
   float last_control_speed = 0;
+  float filtered_vel = 0;
+  float vel_filter_alpha = 0.1f;
   
   const int control_interval = 1000/control_loop_frequency;
   const int serial_print_interval = 1000/serial_print_frequency;
@@ -142,10 +144,12 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
 
       float measured_pos = encoder.getCumulativeAngle() / float(GEAR_RATIO);
       float measured_vel = encoder.getVelocity() / float(GEAR_RATIO);
+      filtered_vel = vel_filter_alpha * measured_vel + (1 - vel_filter_alpha) * filtered_vel;
+
       
 
       float pos_error = desired_pos - measured_pos;
-      float vel_error = desired_vel - measured_vel;
+      float vel_error = desired_vel - filtered_vel;
 
       float control_speed = desired_vel + Kp * pos_error;
 
@@ -158,7 +162,7 @@ void execute_motion_profile_segment(const Waypoint &wp1, const Waypoint &wp2) {
         Serial.print(pos_error);
         Serial.print(" | ");
         Serial.print("Velocity: ");
-        Serial.print(measured_vel);
+        Serial.print(filtered_vel);
         Serial.print(" | ");
         Serial.print("Velocity Error: ");
         Serial.print(vel_error);
