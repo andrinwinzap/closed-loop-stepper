@@ -193,6 +193,7 @@ void execute_motion_profile(const Waypoint* arr, size_t length) {
   for (size_t i = 0; i < length-1; ++i) {
     execute_motion_profile_segment(arr[i], arr[i+1]);
   }
+  stepper.setSpeed(0);
 } 
 
 void setup() {
