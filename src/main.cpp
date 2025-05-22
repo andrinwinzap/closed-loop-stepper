@@ -11,7 +11,7 @@ Stepper stepper(17, 16, 4); // STEP, DIR, EN
 
 void home() {
 
-  const float homing_speed = 2*PI;
+  const float homing_speed = 4*PI;
 
   Serial.println("Starting homing process...");
 
@@ -20,28 +20,30 @@ void home() {
   
   stepper.setSpeed(homing_speed);
   stepper.start();
-  int counter = 0;
-  const int threshold = 10;
-  const int interval = 1;
-  unsigned long last_check = millis();
 
-  while (counter < threshold) {
-    if (millis() - last_check > interval) {
-      if (analogRead(HALL_PIN) <= 10) {
-        counter++;
-      } else {
-        counter = 0;
-      }
-      last_check = millis();
+  float filteredHallSensorValue = analogRead(HALL_PIN);
+  float hallSensorAlpha = 0.3;
+  float hallSensorUpdateFrequency = 2000;
+
+  float hallSensorUpdatePeriod = 1e6 / hallSensorUpdateFrequency;
+
+  while (true) {
+    
+    int raw = analogRead(HALL_PIN);
+    filteredHallSensorValue = hallSensorAlpha * raw + (1 - hallSensorAlpha) * filteredHallSensorValue;
+
+    if (filteredHallSensorValue < 1) {
+
+      stepper.stop();
+      encoder.resetCumulativeAngle();
+
+      Serial.println("Finished homing");
+      break;
     }
+
+    delayMicroseconds(hallSensorUpdatePeriod);
   }
 
-  stepper.stop();
-  encoder.resetCumulativeAngle();
-
-  delay(1000);
-
-  Serial.println("Finished homing");
 } 
 
 void setup() {
@@ -67,20 +69,15 @@ void setup() {
   
   home();
 
-  Waypoint trajectory[] = {
-  Waypoint {
-                      0,
-                      0,
-                      0
-                    },
-  Waypoint {
-                      2*PI,
-                      0,
-                      5000
-                    }
-                  };
+Waypoint trajectory[] = {
+  {0,          0,      0},        // start at 0 rad, velocity 0 at t=0 ms
+  {PI,     0,   8000},
+  {-2*PI,     0,   16000},
+};
+
+
   unsigned long motion_start_time = millis();
-  execute_trajectory(trajectory, 2, encoder, stepper, GEAR_RATIO);
+  execute_trajectory(trajectory, 3, encoder, stepper, GEAR_RATIO);
   Serial.print("Motion Duration: ");
   Serial.println(millis() - motion_start_time);
 }
