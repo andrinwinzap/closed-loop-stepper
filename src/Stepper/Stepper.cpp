@@ -93,8 +93,6 @@ void Stepper::setMaxSpeed(float radPerSec) {
 void Stepper::move(float angleRad) {
   if (angleRad == 0.0f) return;
 
-  // Determine direction
-  digitalWrite(dirPin, angleRad > 0 ? HIGH : LOW);
   float absAngle = fabs(angleRad);
 
   // Calculate number of steps
