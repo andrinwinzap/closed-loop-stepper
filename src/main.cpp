@@ -18,12 +18,14 @@ void home() {
   stepper.setSpeed(-homing_speed);
   stepper.move((PI/4.0) * GEAR_RATIO);
   
+  float first_bound = 0;
+
   stepper.setSpeed(homing_speed);
   stepper.start();
 
   float filteredHallSensorValue = analogRead(HALL_PIN);
-  float hallSensorAlpha = 0.3;
-  float hallSensorUpdateFrequency = 2000;
+  float hallSensorAlpha = 0.2;
+  float hallSensorUpdateFrequency = 1000;
 
   float hallSensorUpdatePeriod = 1e6 / hallSensorUpdateFrequency;
 
@@ -34,11 +36,31 @@ void home() {
 
     if (filteredHallSensorValue < 1) {
 
+      first_bound = encoder.getCumulativeAngle();
+      break;
+
+    }
+
+    delayMicroseconds(hallSensorUpdatePeriod);
+  }
+
+  while (true) {
+    
+    int raw = analogRead(HALL_PIN);
+    filteredHallSensorValue = hallSensorAlpha * raw + (1 - hallSensorAlpha) * filteredHallSensorValue;
+
+    if (filteredHallSensorValue > 1) {
+
       stepper.stop();
-      encoder.setCumulativeAngle(0);
+      float current_pos = encoder.getCumulativeAngle();
+      float home = (current_pos - first_bound) / 2;
+      encoder.setCumulativeAngle(current_pos - home);
 
       Serial.println("Finished homing");
+
+      delay(1000);
       break;
+
     }
 
     delayMicroseconds(hallSensorUpdatePeriod);
