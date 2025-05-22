@@ -26,6 +26,7 @@ private:
   float currentFrequency = 0;
   float maxSpeedRadPerSec = 100.0f;           // Default max speed
   bool isRunning = false;
+  bool timerAlarmIsEnabled = false;
   bool direction = true; // true = HIGH (forward), false = LOW (reverse)
 
 

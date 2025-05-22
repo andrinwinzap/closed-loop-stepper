@@ -31,11 +31,16 @@ void Stepper::setSpeed(float radPerSec) {
 
   if (radPerSec == 0.0f) {
     digitalWrite(stepPin, LOW);
-    currentFrequency = 0;
-    if (isRunning) {
-      stop();
+    if (timerAlarmIsEnabled) {
+      timerAlarmDisable(timer);
+      timerAlarmIsEnabled = false;
     }
     return;
+  } else {
+    if (isRunning && !timerAlarmIsEnabled) {
+      timerAlarmEnable(timer);
+      timerAlarmIsEnabled = true;
+    }
   }
 
   if (radPerSec > 0) {
@@ -119,18 +124,20 @@ void Stepper::move(float angleRad) {
 }
 
 void Stepper::start() {
-  if (currentFrequency > 0.0f && !isRunning) {
+  isRunning = true;
+  if (!timerAlarmIsEnabled && currentFrequency > 0.0f) {
     timerAlarmEnable(timer);
-    isRunning = true;
+    timerAlarmIsEnabled = true;
   }
 }
 
 
 void Stepper::stop() {
-  if (isRunning) {
+  isRunning = false;
+  if (timerAlarmIsEnabled) {
     timerAlarmDisable(timer);
+    timerAlarmIsEnabled = false;
     digitalWrite(stepPin, LOW);  // Ensure step pin is low
-    isRunning = false;
   }
 }
 
