@@ -85,8 +85,8 @@ bool AS5600::magnetDetected() {
     return (status & (1 << 5)) != 0;
 }
 
-void AS5600::resetCumulativeAngle() {
-    _cumulativeAngle = 0.0;
+void AS5600::setCumulativeAngle(float angle) {
+    _cumulativeAngle = angle;
     _lastAngle = getRadians();
 }
 

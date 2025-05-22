@@ -35,7 +35,7 @@ void home() {
     if (filteredHallSensorValue < 1) {
 
       stepper.stop();
-      encoder.resetCumulativeAngle();
+      encoder.setCumulativeAngle(0);
 
       Serial.println("Finished homing");
       break;

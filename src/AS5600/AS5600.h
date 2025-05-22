@@ -12,7 +12,7 @@ public:
 
     float getRadians();           // current angle in radians
     float getCumulativeAngle();   // angle including rollover
-    void resetCumulativeAngle(); // set cumulative angle to 0
+    void setCumulativeAngle(float angle); // set cumulative angle
     float getVelocity();             // speed in rad/s
     bool magnetDetected();
 
