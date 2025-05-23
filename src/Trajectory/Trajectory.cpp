@@ -190,3 +190,69 @@ void execute_trajectory(const Waypoint* arr, size_t length, AS5600 &encoder, Ste
   }
   stepper.stop(); // Ensure motor stops
 }
+void move_to(float target_position, AS5600 &encoder, Stepper &stepper, float gear_ratio) {
+  const float Kp = 1.0f;  // Proportional gain for position error
+  const float position_tolerance = 0.001f; // radians or whatever unit used
+  const float max_speed = 6.0f; // max speed limit (units/sec)
+  const float max_acceleration = 10.0f; // max acceleration (units/sec²)
+
+  const int control_loop_frequency = 500; // Hz
+  const int control_interval = 1000 / control_loop_frequency;
+
+  stepper.start();
+
+  unsigned long last_control_time = millis();
+  float last_speed_command = 0.0f;
+
+  while (true) {
+    unsigned long now = millis();
+    if (now - last_control_time >= control_interval) {
+      float dt = (now - last_control_time) * 0.001f; // convert ms to seconds
+
+      float current_position = encoder.getCumulativeAngle() / gear_ratio;
+      float pos_error = target_position - current_position;
+
+      // If within tolerance, stop and break loop
+      if (fabs(pos_error) <= position_tolerance) {
+        stepper.setSpeed(0);
+        Serial.println("Position reached within tolerance. Stopping.");
+        break;
+      }
+
+      // Proportional control speed command
+      float desired_speed = Kp * pos_error;
+
+      // Clamp desired speed to max limits
+      if (desired_speed > max_speed) desired_speed = max_speed;
+      else if (desired_speed < -max_speed) desired_speed = -max_speed;
+
+      // Limit acceleration
+      float max_speed_change = max_acceleration * dt;
+      float speed_diff = desired_speed - last_speed_command;
+
+      if (speed_diff > max_speed_change) {
+        desired_speed = last_speed_command + max_speed_change;
+        speed_diff = max_speed_change;
+      } else if (speed_diff < -max_speed_change) {
+        desired_speed = last_speed_command - max_speed_change;
+        speed_diff = -max_speed_change;
+      }
+
+      // Apply speed command scaled by gear ratio
+      stepper.setSpeed(desired_speed * gear_ratio);
+
+      // Debug output
+      Serial.print("Pos Error: ");
+      Serial.print(pos_error, 4);
+      Serial.print(" | Speed Cmd: ");
+      Serial.print(desired_speed, 4);
+      Serial.print(" | Accel Applied: ");
+      Serial.println(speed_diff / dt, 4);  // acceleration in units/sec²
+
+      last_speed_command = desired_speed;
+      last_control_time = now;
+    }
+  }
+
+  stepper.stop();
+}
