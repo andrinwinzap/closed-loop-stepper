@@ -13,7 +13,7 @@ public:
   void setMicrosteps(uint8_t microsteps);
   void setStepsPerRevolution(uint16_t stepsPerRevolution);
   void setMaxSpeed(float radPerSec);           // Set max angular speed
-  void move(float angleRad);
+  void move(float angleRad, float max_speed_rads, float max_accel_rads2);
   void start();  // Start continuous stepping at current speed
   void stop();   // Stop continuous stepping
   void accelerate(float start_speed, float target_speed, float acceleration);

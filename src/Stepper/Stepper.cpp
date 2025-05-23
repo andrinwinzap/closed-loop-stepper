@@ -98,31 +98,91 @@ void Stepper::setMaxSpeed(float radPerSec) {
   maxSpeedRadPerSec = fabs(radPerSec);
 }
 
-void Stepper::move(float angleRad) {
+void Stepper::move(float angleRad, float max_speed_rads, float max_accel_rads2) {
   if (angleRad == 0.0f) return;
 
-  float absAngle = fabs(angleRad);
+  // Set direction
+  digitalWrite(dirPin, angleRad > 0 ? HIGH : LOW);
 
-  // Calculate number of steps
-  uint32_t steps = (uint32_t)((absAngle / (2.0f * PI)) * stepsPerRev * microsteps);
+  // Calculate total steps needed
+  const float absAngle = fabs(angleRad);
+  const uint32_t steps = static_cast<uint32_t>((absAngle / (2.0f * PI)) * stepsPerRev * microsteps);
+  if (steps == 0) return;
 
-  // Calculate delay per half-cycle (i.e., time between step HIGH-LOW toggles)
-  if (currentFrequency <= 0.0f) {
-    Serial.println("Speed not set. Use setSpeed() before move().");
-    return;
+  // Convert radian units to step units
+  const float steps_per_rad = (stepsPerRev * microsteps) / (2.0f * PI);
+  const float max_speed = max_speed_rads * steps_per_rad;     // steps/s
+  const float max_accel = max_accel_rads2 * steps_per_rad;    // steps/s²
+
+  // Calculate acceleration profile
+  const float accel_time = max_speed / max_accel;
+  const float accel_steps = 0.5f * max_accel * accel_time * accel_time;
+  
+  uint32_t steps_accel = static_cast<uint32_t>(accel_steps);
+  uint32_t steps_decel = steps_accel;
+  uint32_t steps_coast = 0;
+
+  // Determine motion profile
+  bool triangular = false;
+  if (steps_accel + steps_decel >= steps) {
+    // Triangular profile (no coast phase)
+    triangular = true;
+    steps_accel = steps / 2;
+    steps_decel = steps - steps_accel;
+  } else {
+    // Trapezoidal profile (with coast phase)
+    steps_coast = steps - steps_accel - steps_decel;
   }
-  float halfPeriod_us = 500000.0 / currentFrequency;
 
-  if (isRunning) {
-      stop();
-    }
+  // Calculate initial parameters
+  float current_speed = 0;
+  unsigned long last_step_time = micros();
 
-  // Perform the steps
-  for (uint32_t i = 0; i < steps; ++i) {
+  // Acceleration phase
+  for (uint32_t s = 1; s <= steps_accel; s++) {
+    current_speed = sqrt(2.0f * max_accel * s);
+    if (current_speed > max_speed) current_speed = max_speed;
+    
+    const unsigned long step_delay = static_cast<unsigned long>(500000.0f / current_speed);
+    
+    while (micros() - last_step_time < step_delay) {}
     digitalWrite(stepPin, HIGH);
-    delayMicroseconds((uint32_t)halfPeriod_us);
+    last_step_time = micros();
+    
+    while (micros() - last_step_time < step_delay) {}
     digitalWrite(stepPin, LOW);
-    delayMicroseconds((uint32_t)halfPeriod_us);
+    last_step_time = micros();
+  }
+
+  // Coast phase (trapezoidal only)
+  if (!triangular) {
+    const unsigned long coast_delay = static_cast<unsigned long>(500000.0f / max_speed);
+    
+    for (uint32_t s = 0; s < steps_coast; s++) {
+      while (micros() - last_step_time < coast_delay) {}
+      digitalWrite(stepPin, HIGH);
+      last_step_time = micros();
+      
+      while (micros() - last_step_time < coast_delay) {}
+      digitalWrite(stepPin, LOW);
+      last_step_time = micros();
+    }
+  }
+
+  // Deceleration phase
+  for (uint32_t s = steps_decel; s > 0; s--) {
+    current_speed = sqrt(2.0f * max_accel * s);
+    if (current_speed > max_speed) current_speed = max_speed;
+    
+    const unsigned long step_delay = static_cast<unsigned long>(500000.0f / current_speed);
+    
+    while (micros() - last_step_time < step_delay) {}
+    digitalWrite(stepPin, HIGH);
+    last_step_time = micros();
+    
+    while (micros() - last_step_time < step_delay) {}
+    digitalWrite(stepPin, LOW);
+    last_step_time = micros();
   }
 }
 
