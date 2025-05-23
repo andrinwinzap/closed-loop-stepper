@@ -1,13 +1,37 @@
 #include "AS5600.h"
 
-AS5600::AS5600(float _gear_ratio, TwoWire &wirePort, uint8_t address)
-    : _gear_ratio(_gear_ratio), _wire(&wirePort), _address(address) {}
+AS5600* AS5600::_instance = nullptr;
+
+AS5600::AS5600(float gear_ratio, TwoWire &wirePort, uint8_t address)
+    : _gear_ratio(gear_ratio), _wire(&wirePort), _address(address) {}
 
 bool AS5600::begin() {
     _wire->begin();
     _lastUpdate = millis();
     _lastRawAngle = getRawAngle();
+
+    _instance = this;
+
+    _timer = timerBegin(1, 80, true);  // prescaler 80 = 1 tick = 1 us
+    timerAttachInterrupt(_timer, &AS5600::onTimerISR, true);
+
+    uint64_t ticks = (uint64_t)(1000000.0f / _updateFrequencyHz); // microseconds per tick
+    timerAlarmWrite(_timer, ticks, true);
+    timerAlarmEnable(_timer);
+
     return true;
+}
+
+void IRAM_ATTR AS5600::onTimerISR() {
+    if (_instance) {
+        portENTER_CRITICAL_ISR(&_instance->_timerMux);
+        _instance->setUpdateFlag();
+        portEXIT_CRITICAL_ISR(&_instance->_timerMux);
+    }
+}
+
+void AS5600::setUpdateFlag() {
+    _updateFlag = true;
 }
 
 uint8_t AS5600::read8(uint8_t reg) {
@@ -39,23 +63,28 @@ float AS5600::getRawAngle() {
 }
 
 void AS5600::update() {
+    bool shouldUpdate = false;
+
+    portENTER_CRITICAL(&_timerMux);
+    if (_updateFlag) {
+        shouldUpdate = true;
+        _updateFlag = false;
+    }
+    portEXIT_CRITICAL(&_timerMux);
+
+    if (!shouldUpdate) return;
+
     float current = getRawAngle();
     unsigned long now = millis();
     float delta = current - _lastRawAngle;
 
-    // Handle rollover
-    if (delta > PI) {
-        delta -= 2*PI;
-    } else if (delta < -PI) {
-        delta += 2*PI;
-    }
+    if (delta > PI) delta -= 2 * PI;
+    else if (delta < -PI) delta += 2 * PI;
 
     _position += delta;
+    float dt = (now - _lastUpdate) / 1000.0;
 
-    float dt = (now - _lastUpdate) / 1000.0;  // seconds
-    if (dt > 0) {
-        _speed = delta / dt;
-    }
+    if (dt > 0) _speed = delta / dt;
 
     _lastRawAngle = current;
     _lastUpdate = now;
@@ -67,6 +96,7 @@ float AS5600::getPosition() {
 }
 
 float AS5600::getSpeed() {
+    update();
     return _speed / _gear_ratio;
 }
 
@@ -80,3 +110,14 @@ void AS5600::setPosition(float angle) {
     _lastRawAngle = getRawAngle();
 }
 
+void AS5600::setUpdateFrequency(float freqHz) {
+    if (freqHz <= 0) return;  // ignore invalid frequencies
+    _updateFrequencyHz = freqHz;
+
+    if (_timer) {
+        timerAlarmDisable(_timer);
+        uint64_t ticks = (uint64_t)(1000000.0f / _updateFrequencyHz);  // microseconds per tick
+        timerAlarmWrite(_timer, ticks, true);
+        timerAlarmEnable(_timer);
+    }
+}
