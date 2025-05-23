@@ -12,7 +12,7 @@ Stepper stepper(17, 16, 4, GEAR_RATIO); // STEP, DIR, EN
 void home() {
 
   const float homing_speed = 0.3;
-  const float homing_acceleration = 0.3;
+  const float homing_acceleration = 0.5;
 
   Serial.println("Starting homing process...");
 
@@ -38,51 +38,38 @@ void home() {
     int raw = analogRead(HALL_PIN);
     filteredHallSensorValue = hallSensorAlpha * raw + (1 - hallSensorAlpha) * filteredHallSensorValue;
 
-    if (filteredHallSensorValue < 1) {
-
-      first_bound = encoder.getPosition();
-      // encoder.setPosition(0);
-      // stepper.accelerate(homing_speed, 0, homing_acceleration);
-      // while (stepper.updateAcceleration()) {
-      //   encoder.update();
-      // }
-      // move_to(0, encoder, stepper, GEAR_RATIO);
-      // Serial.println("Finished homing");
-      // Serial.println(encoder.getPosition());
-      break;
-
-    }
+    if (filteredHallSensorValue < 1) break;
 
     delayMicroseconds(hallSensorUpdatePeriod);
   }
+
+  first_bound = encoder.getPosition();
 
   while (true) {
     
     int raw = analogRead(HALL_PIN);
     filteredHallSensorValue = hallSensorAlpha * raw + (1 - hallSensorAlpha) * filteredHallSensorValue;
 
-    if (filteredHallSensorValue > 1) {
-
-      float current_pos = encoder.getPosition();
-      float home = (current_pos - first_bound) / 2;
-      encoder.setPosition(current_pos - home);
-
-      stepper.accelerate(homing_speed, 0, homing_acceleration);
-      while (stepper.updateAcceleration()) {
-        encoder.update();
-      }
-      move_to(0, encoder, stepper);
-      Serial.println("Finished homing");
-      Serial.println(encoder.getPosition());
-
-      delay(1000);
-      break;
-
-    }
+    if (filteredHallSensorValue > 1) break;
 
     delayMicroseconds(hallSensorUpdatePeriod);
   }
 
+  float current_pos = encoder.getPosition();
+    float home = (current_pos - first_bound) / 2;
+    encoder.setPosition(current_pos - home);
+
+    stepper.accelerate(homing_speed, 0, homing_acceleration);
+    while (stepper.updateAcceleration()) {
+      unsigned long start = micros();
+      encoder.update();
+      Serial.println(micros()-start);
+    }
+    move_to(0, encoder, stepper);
+    Serial.println("Finished homing");
+    Serial.println(encoder.getPosition());
+
+    delay(1000);
 } 
 
 void setup() {
