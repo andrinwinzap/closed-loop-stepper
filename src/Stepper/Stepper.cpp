@@ -29,6 +29,8 @@ void Stepper::setSpeed(float radPerSec) {
     radPerSec = -maxSpeedRadPerSec;
   }
 
+  currentSpeed = radPerSec;
+
   if (radPerSec == 0.0f) {
     digitalWrite(stepPin, LOW);
     if (timerAlarmIsEnabled) {
@@ -54,6 +56,7 @@ void Stepper::setSpeed(float radPerSec) {
   currentFrequency = float(abs(radPerSec) * stepsPerRev * microsteps) / float(2 * PI);
   updateTimer();
 }
+
 
 
 void Stepper::enable() {
@@ -139,5 +142,51 @@ void Stepper::stop() {
     timerAlarmIsEnabled = false;
     digitalWrite(stepPin, LOW);  // Ensure step pin is low
   }
+}
+
+void Stepper::accelerate(float start_speed, float target_speed, float acceleration) {
+  // Clamp target speed
+  if (target_speed > maxSpeedRadPerSec) target_speed = maxSpeedRadPerSec;
+  if (target_speed < -maxSpeedRadPerSec) target_speed = -maxSpeedRadPerSec;
+
+  acceleration_target_speed = target_speed;
+
+  // Determine direction of acceleration
+  float speed_diff = target_speed - start_speed;
+  if (speed_diff == 0) {
+    accelerating = false;
+    return;
+  }
+
+  acceleration_target = (speed_diff > 0 ? 1 : -1) * fabs(acceleration);
+  accelerating = true;
+
+  setSpeed(start_speed);
+  last_acceleration_update = micros();
+}
+
+bool Stepper::updateAcceleration() {
+  if (!accelerating) return false;
+
+  unsigned long time_d = micros() - last_acceleration_update;
+  float delta_t_sec = time_d / 1e6;
+
+  // Compute new speed
+  float updated_speed = currentSpeed + acceleration_target * delta_t_sec;
+
+  // Check if we've reached or passed the target
+  bool reached_target = 
+      (acceleration_target > 0 && updated_speed >= acceleration_target_speed) ||
+      (acceleration_target < 0 && updated_speed <= acceleration_target_speed);
+
+  if (reached_target) {
+    setSpeed(acceleration_target_speed);  // Snap to target speed
+    accelerating = false;
+  } else {
+    setSpeed(updated_speed);
+    last_acceleration_update = micros();
+  }
+
+  return accelerating;
 }
 

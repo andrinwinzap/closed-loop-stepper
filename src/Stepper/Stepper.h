@@ -16,18 +16,23 @@ public:
   void move(float angleRad);
   void start();  // Start continuous stepping at current speed
   void stop();   // Stop continuous stepping
-
-
+  void accelerate(float start_speed, float target_speed, float acceleration);
+  bool updateAcceleration();
 
 private:
   uint8_t stepPin, dirPin, enPin;
   uint16_t stepsPerRev;
   uint8_t microsteps;
   float currentFrequency = 0;
+  float currentSpeed = 0;
   float maxSpeedRadPerSec = 100.0f;           // Default max speed
   bool isRunning = false;
   bool timerAlarmIsEnabled = false;
   bool direction = true; // true = HIGH (forward), false = LOW (reverse)
+  float acceleration_target_speed = 0.0f;
+  float acceleration_target = 0.0f;
+  bool accelerating = false;
+  unsigned long last_acceleration_update = 0;
 
 
   hw_timer_t* timer = nullptr;
