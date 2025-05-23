@@ -7,24 +7,24 @@
 #define GEAR_RATIO 15.0
 
 AS5600 encoder(GEAR_RATIO);
-Stepper stepper(17, 16, 4); // STEP, DIR, EN
+Stepper stepper(17, 16, 4, GEAR_RATIO); // STEP, DIR, EN
 
 void home() {
 
-  const float homing_speed = 1*PI;
-  const float homing_acceleration = 1*PI;
+  const float homing_speed = 0.3;
+  const float homing_acceleration = 0.3;
 
   Serial.println("Starting homing process...");
 
   stepper.setSpeed(-homing_speed);
-  stepper.move(-PI/4.0 * GEAR_RATIO, homing_speed, homing_acceleration);
+  stepper.move(-PI/4.0, homing_speed, homing_acceleration);
 
   Serial.println("BlaBla");
   
   float first_bound = 0;
 
   stepper.start();
-  stepper.accelerate(0, homing_speed, PI);
+  stepper.accelerate(0, homing_speed, homing_acceleration);
 
   float filteredHallSensorValue = analogRead(HALL_PIN);
   float hallSensorAlpha = 0.2;
@@ -71,7 +71,7 @@ void home() {
       while (stepper.updateAcceleration()) {
         encoder.update();
       }
-      move_to(0, encoder, stepper, GEAR_RATIO);
+      move_to(0, encoder, stepper);
       Serial.println("Finished homing");
       Serial.println(encoder.getPosition());
 
@@ -108,21 +108,24 @@ void setup() {
   
   home();
   
+  // move_to(PI/2, encoder, stepper, GEAR_RATIO);
+  // move_to(0, encoder, stepper, GEAR_RATIO);
+
   Serial.println(encoder.getPosition());
 
-  // Waypoint trajectory[] = {
-  //   {0,          0,      0},        // start at 0 rad, velocity 0 at t=0 ms
-  //   {PI/2.0,     0,   5000},
-  //   {0,     0,   10000}
-  // };
+  Waypoint trajectory[] = {
+    {0,          0,      0},        // start at 0 rad, velocity 0 at t=0 ms
+    {PI/2.0,     0,   2000},
+    {0,     0,   4000}
+  };
 
 
-  // unsigned long motion_start_time = millis();
-  // execute_trajectory(trajectory, 3, encoder, stepper, GEAR_RATIO);
-  // Serial.print("Motion Duration: ");
-  // Serial.println(millis() - motion_start_time);
+  unsigned long motion_start_time = millis();
+  execute_trajectory(trajectory, 3, encoder, stepper);
+  Serial.print("Motion Duration: ");
+  Serial.println(millis() - motion_start_time);
 
-  // stepper.disable();
+  stepper.disable();
 }
 
 void loop() {

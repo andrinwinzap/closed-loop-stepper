@@ -66,7 +66,7 @@ float hermiteVelocity(const Waypoint &wp1,
 }
 
 
-void execute_trajectory_segment(const Waypoint &wp1, const Waypoint &wp2, AS5600 &encoder, Stepper &stepper, float gear_ratio) {
+void execute_trajectory_segment(const Waypoint &wp1, const Waypoint &wp2, AS5600 &encoder, Stepper &stepper) {
 
   ////////////////////////////////////////////////////////
 
@@ -109,7 +109,7 @@ void execute_trajectory_segment(const Waypoint &wp1, const Waypoint &wp2, AS5600
     unsigned long elapsed = now - motion_segment_start_time;
 
     if (elapsed >= motion_duration) {
-      stepper.setSpeed(wp2.velocity * gear_ratio);
+      stepper.setSpeed(wp2.velocity);
       break;
     }
 
@@ -167,7 +167,7 @@ void execute_trajectory_segment(const Waypoint &wp1, const Waypoint &wp2, AS5600
       }
 
       if (control_speed != last_control_speed){
-        stepper.setSpeed(control_speed * gear_ratio);
+        stepper.setSpeed(control_speed);
         last_control_speed = control_speed;
       }
 
@@ -180,21 +180,21 @@ void execute_trajectory_segment(const Waypoint &wp1, const Waypoint &wp2, AS5600
 
   if (stalled) {
     Serial.print("New motion profile started");
-    execute_trajectory_segment(new_start, wp2, encoder, stepper, gear_ratio);
+    execute_trajectory_segment(new_start, wp2, encoder, stepper);
   }
 }
 
-void execute_trajectory(const Waypoint* arr, size_t length, AS5600 &encoder, Stepper &stepper, float gear_ratio) {
+void execute_trajectory(const Waypoint* arr, size_t length, AS5600 &encoder, Stepper &stepper) {
   for (size_t i = 0; i < length-1; ++i) {
-    execute_trajectory_segment(arr[i], arr[i+1], encoder, stepper, gear_ratio);
+    execute_trajectory_segment(arr[i], arr[i+1], encoder, stepper);
   }
   stepper.stop(); // Ensure motor stops
 }
-void move_to(float target_position, AS5600 &encoder, Stepper &stepper, float gear_ratio) {
+void move_to(float target_position, AS5600 &encoder, Stepper &stepper) {
   const float Kp = 1.0f;  // Proportional gain for position error
-  const float position_tolerance = 0.001f; // radians or whatever unit used
+  const float position_tolerance = 0.01f; // radians or whatever unit used
   const float max_speed = 6.0f; // max speed limit (units/sec)
-  const float max_acceleration = 10.0f; // max acceleration (units/sec²)
+  const float max_acceleration = 0.3f; // max acceleration (units/sec²)
 
   const int control_loop_frequency = 500; // Hz
   const int control_interval = 1000 / control_loop_frequency;
@@ -239,7 +239,7 @@ void move_to(float target_position, AS5600 &encoder, Stepper &stepper, float gea
       }
 
       // Apply speed command scaled by gear ratio
-      stepper.setSpeed(desired_speed * gear_ratio);
+      stepper.setSpeed(desired_speed);
 
       // Debug output
       Serial.print("Pos Error: ");

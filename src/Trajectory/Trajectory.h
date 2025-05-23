@@ -19,10 +19,10 @@ float hermiteVelocity(const Waypoint &wp1,
                       const Waypoint &wp2,
                       unsigned long elapsed);
 
-void execute_trajectory_segment(const Waypoint &wp1, const Waypoint &wp2, AS5600 &encoder, Stepper &stepper, float gear_ratio);
+void execute_trajectory_segment(const Waypoint &wp1, const Waypoint &wp2, AS5600 &encoder, Stepper &stepper);
 
-void execute_trajectory(const Waypoint* arr, size_t length, AS5600 &encoder, Stepper &stepper, float gear_ratio);
+void execute_trajectory(const Waypoint* arr, size_t length, AS5600 &encoder, Stepper &stepper);
 
-void move_to(float position, AS5600 &encoder, Stepper &stepper, float gear_ratio);
+void move_to(float position, AS5600 &encoder, Stepper &stepper);
 
 #endif

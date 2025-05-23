@@ -3,7 +3,7 @@
 
 class Stepper {
 public:
-  Stepper(uint8_t stepPin, uint8_t dirPin, uint8_t enPin,
+  Stepper(uint8_t stepPin, uint8_t dirPin, uint8_t enPin, float gear_ratio,
           uint16_t stepsPerRevolution = 200, uint8_t microsteps = 1);
 
   void begin();
@@ -33,6 +33,7 @@ private:
   float acceleration_target = 0.0f;
   bool accelerating = false;
   unsigned long last_acceleration_update = 0;
+  float gear_ratio;
 
 
   hw_timer_t* timer = nullptr;

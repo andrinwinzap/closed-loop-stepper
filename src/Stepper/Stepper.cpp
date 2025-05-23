@@ -2,9 +2,9 @@
 
 Stepper* Stepper::instance = nullptr;
 
-Stepper::Stepper(uint8_t stepPin, uint8_t dirPin, uint8_t enPin,
+Stepper::Stepper(uint8_t stepPin, uint8_t dirPin, uint8_t enPin, float gear_ratio,
                  uint16_t stepsPerRevolution, uint8_t microsteps)
-  : stepPin(stepPin), dirPin(dirPin), enPin(enPin),
+  : stepPin(stepPin), dirPin(dirPin), enPin(enPin), gear_ratio(gear_ratio),
     stepsPerRev(stepsPerRevolution), microsteps(microsteps) {}
 
 void Stepper::begin() {
@@ -53,7 +53,7 @@ void Stepper::setSpeed(float radPerSec) {
     direction = false;
   }
 
-  currentFrequency = float(abs(radPerSec) * stepsPerRev * microsteps) / float(2 * PI);
+  currentFrequency = float(abs(radPerSec) * stepsPerRev * microsteps * gear_ratio) / float(2 * PI);
   updateTimer();
 }
 
@@ -106,11 +106,11 @@ void Stepper::move(float angleRad, float max_speed_rads, float max_accel_rads2) 
 
   // Calculate total steps needed
   const float absAngle = fabs(angleRad);
-  const uint32_t steps = static_cast<uint32_t>((absAngle / (2.0f * PI)) * stepsPerRev * microsteps);
+  const uint32_t steps = static_cast<uint32_t>((absAngle / (2.0f * PI)) * stepsPerRev * microsteps * gear_ratio);
   if (steps == 0) return;
 
   // Convert radian units to step units
-  const float steps_per_rad = (stepsPerRev * microsteps) / (2.0f * PI);
+  const float steps_per_rad = (stepsPerRev * microsteps * gear_ratio) / (2.0f * PI);
   const float max_speed = max_speed_rads * steps_per_rad;     // steps/s
   const float max_accel = max_accel_rads2 * steps_per_rad;    // steps/s²
 
