@@ -17,7 +17,7 @@ void home() {
   Serial.println("Starting homing process...");
 
   stepper.setSpeed(-homing_speed);
-  stepper.move(-PI/4.0, homing_speed, homing_acceleration);
+  stepper.move(-PI/8.0, homing_speed, homing_acceleration);
 
   Serial.println("BlaBla");
   
@@ -107,11 +107,6 @@ void setup() {
   pinMode(HALL_PIN, INPUT_PULLUP);
   
   home();
-  
-  // move_to(PI/2, encoder, stepper, GEAR_RATIO);
-  // move_to(0, encoder, stepper, GEAR_RATIO);
-
-  Serial.println(encoder.getPosition());
 
   Waypoint trajectory[] = {
     {0,          0,      0},        // start at 0 rad, velocity 0 at t=0 ms

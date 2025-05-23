@@ -66,7 +66,7 @@ float hermiteVelocity(const Waypoint &wp1,
 }
 
 
-void execute_trajectory_segment(const Waypoint &wp1, const Waypoint &wp2, AS5600 &encoder, Stepper &stepper) {
+void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, Stepper &stepper) {
 
   ////////////////////////////////////////////////////////
 
@@ -76,6 +76,7 @@ void execute_trajectory_segment(const Waypoint &wp1, const Waypoint &wp2, AS5600
 
   const int control_loop_frequency = 500; // Control loop frequency in Hz
   const int serial_print_frequency = 100; // Serial print frequency in Hz
+  const bool debug_output = false;
 
   float vel_filter_alpha = 0.1f; // Velocity low pass filter alpha
 
@@ -85,6 +86,16 @@ void execute_trajectory_segment(const Waypoint &wp1, const Waypoint &wp2, AS5600
 
   ////////////////////////////////////////////////////////
   
+  Serial.print("Waypoint | Position: ");
+  Serial.print(wp1.position);
+  Serial.print(" | Speed: ");
+  Serial.print(wp1.velocity);
+  Serial.print(" | Timestamp: ");
+  Serial.println(wp1.timestamp);
+
+  const int control_interval = 1000/control_loop_frequency;
+  const int serial_print_interval = 1000/serial_print_frequency;
+
   unsigned long now = millis();
   unsigned long motion_segment_start_time = now;
 
@@ -96,9 +107,6 @@ void execute_trajectory_segment(const Waypoint &wp1, const Waypoint &wp2, AS5600
   bool stalled = false;
   unsigned long stall_start_time = 0;
   Waypoint new_start = wp1;
-  
-  const int control_interval = 1000/control_loop_frequency;
-  const int serial_print_interval = 1000/serial_print_frequency;
 
   unsigned long motion_duration = wp2.timestamp - wp1.timestamp;
 
@@ -147,7 +155,7 @@ void execute_trajectory_segment(const Waypoint &wp1, const Waypoint &wp2, AS5600
       float control_speed = Kf * desired_vel + Kp * pos_error + Kv * vel_error;
 
 
-      if (millis() - last_serial_print_timestamp > serial_print_interval) {
+      if (debug_output && millis() - last_serial_print_timestamp > serial_print_interval) {
         Serial.print("Position: ");
         Serial.print(measured_pos);
         Serial.print(" | ");
@@ -179,12 +187,22 @@ void execute_trajectory_segment(const Waypoint &wp1, const Waypoint &wp2, AS5600
   Serial.println(millis() - motion_segment_start_time);
 
   if (stalled) {
-    Serial.print("New motion profile started");
+    Serial.println("New motion profile started");
     execute_trajectory_segment(new_start, wp2, encoder, stepper);
   }
+
+  wp2.position = encoder.getPosition();
+  wp2.velocity = encoder.getSpeed();
+  Serial.print("Updated Waypoint | Position: ");
+  Serial.print(wp2.position);
+  Serial.print(" | Speed: ");
+  Serial.print(wp2.velocity);
+  Serial.print(" | Timestamp: ");
+  Serial.println(wp2.timestamp);
+  
 }
 
-void execute_trajectory(const Waypoint* arr, size_t length, AS5600 &encoder, Stepper &stepper) {
+void execute_trajectory(Waypoint* arr, size_t length, AS5600 &encoder, Stepper &stepper) {
   for (size_t i = 0; i < length-1; ++i) {
     execute_trajectory_segment(arr[i], arr[i+1], encoder, stepper);
   }
