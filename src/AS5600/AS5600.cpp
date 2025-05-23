@@ -1,14 +1,12 @@
 #include "AS5600.h"
 
-#define TWO_PI 6.28318530718
-
 AS5600::AS5600(TwoWire &wirePort, uint8_t address)
     : _wire(&wirePort), _address(address) {}
 
 bool AS5600::begin() {
     _wire->begin();
     _lastUpdate = millis();
-    _lastAngle = getRadians();  // Initialize angle state
+    _lastPosition = getPosition();
     return true;
 }
 
@@ -36,48 +34,48 @@ uint16_t AS5600::read12bit(uint8_t regHigh) {
     return ((high << 8) | low) & 0x0FFF;
 }
 
-uint16_t AS5600::getRawAngle() {
+uint16_t AS5600::getRawPosition() {
     return read12bit(0x0E);
 }
 
 float AS5600::rawToRadians(uint16_t raw) {
-    return (raw * TWO_PI) / 4096.0;
+    return (raw * 2*PI) / 4096.0;
 }
 
-float AS5600::getRadians() {
-    return rawToRadians(getRawAngle());
+float AS5600::getPosition() {
+    return rawToRadians(getRawPosition());
 }
 
 void AS5600::update() {
-    float current = getRadians();
+    float current = getPosition();
     unsigned long now = millis();
-    float delta = current - _lastAngle;
+    float delta = current - _lastPosition;
 
     // Handle rollover
     if (delta > PI) {
-        delta -= TWO_PI;
+        delta -= 2*PI;
     } else if (delta < -PI) {
-        delta += TWO_PI;
+        delta += 2*PI;
     }
 
-    _cumulativeAngle += delta;
+    _cumulativePosition += delta;
 
     float dt = (now - _lastUpdate) / 1000.0;  // seconds
     if (dt > 0) {
-        _velocity = delta / dt;
+        _speed = delta / dt;
     }
 
-    _lastAngle = current;
+    _lastPosition = current;
     _lastUpdate = now;
 }
 
-float AS5600::getCumulativeAngle() {
+float AS5600::getCumulativePosition() {
     update();
-    return _cumulativeAngle;
+    return _cumulativePosition;
 }
 
-float AS5600::getVelocity() {
-    return _velocity;
+float AS5600::getSpeed() {
+    return _speed;
 }
 
 bool AS5600::magnetDetected() {
@@ -85,8 +83,8 @@ bool AS5600::magnetDetected() {
     return (status & (1 << 5)) != 0;
 }
 
-void AS5600::setCumulativeAngle(float angle) {
-    _cumulativeAngle = angle;
-    _lastAngle = getRadians();
+void AS5600::setCumulativePosition(float angle) {
+    _cumulativePosition = angle;
+    _lastPosition = getPosition();
 }
 

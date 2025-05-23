@@ -36,7 +36,7 @@ void home() {
 
     if (filteredHallSensorValue < 1) {
 
-      first_bound = encoder.getCumulativeAngle();
+      first_bound = encoder.getCumulativePosition();
       break;
 
     }
@@ -52,9 +52,9 @@ void home() {
     if (filteredHallSensorValue > 1) {
 
       stepper.stop();
-      float current_pos = encoder.getCumulativeAngle();
+      float current_pos = encoder.getCumulativePosition();
       float home = (current_pos - first_bound) / 2;
-      encoder.setCumulativeAngle(current_pos - home);
+      encoder.setCumulativePosition(current_pos - home);
 
       Serial.println("Finished homing");
 
