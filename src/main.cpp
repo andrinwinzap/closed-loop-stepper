@@ -4,9 +4,9 @@
 #include <Trajectory/Trajectory.h>
 
 #define HALL_PIN 15
-#define GEAR_RATIO 15
+#define GEAR_RATIO 15.0
 
-AS5600 encoder;
+AS5600 encoder(GEAR_RATIO);
 Stepper stepper(17, 16, 4); // STEP, DIR, EN
 
 void home() {
@@ -40,12 +40,15 @@ void home() {
 
     if (filteredHallSensorValue < 1) {
 
-      //first_bound = encoder.getCumulativeAngle();
-      encoder.setCumulativePosition(0);
-      stepper.accelerate(homing_speed, 0, homing_acceleration);
-      while (stepper.updateAcceleration())
-      Serial.println("Finished homing");
-      Serial.println(encoder.getCumulativePosition() / GEAR_RATIO);
+      first_bound = encoder.getPosition();
+      // encoder.setPosition(0);
+      // stepper.accelerate(homing_speed, 0, homing_acceleration);
+      // while (stepper.updateAcceleration()) {
+      //   encoder.update();
+      // }
+      // move_to(0, encoder, stepper, GEAR_RATIO);
+      // Serial.println("Finished homing");
+      // Serial.println(encoder.getPosition());
       break;
 
     }
@@ -53,29 +56,32 @@ void home() {
     delayMicroseconds(hallSensorUpdatePeriod);
   }
 
-  // while (true) {
+  while (true) {
     
-  //   int raw = analogRead(HALL_PIN);
-  //   filteredHallSensorValue = hallSensorAlpha * raw + (1 - hallSensorAlpha) * filteredHallSensorValue;
+    int raw = analogRead(HALL_PIN);
+    filteredHallSensorValue = hallSensorAlpha * raw + (1 - hallSensorAlpha) * filteredHallSensorValue;
 
-  //   if (filteredHallSensorValue > 1) {
+    if (filteredHallSensorValue > 1) {
 
-  //     stepper.stop();
-  //     float current_pos = encoder.getCumulativeAngle();
-  //     float home = (current_pos - first_bound) / 2;
-  //     encoder.setCumulativeAngle(current_pos - home);
+      float current_pos = encoder.getPosition();
+      float home = (current_pos - first_bound) / 2;
+      encoder.setPosition(current_pos - home);
 
-  //     move_to(0, encoder, stepper, GEAR_RATIO);
+      stepper.accelerate(homing_speed, 0, homing_acceleration);
+      while (stepper.updateAcceleration()) {
+        encoder.update();
+      }
+      move_to(0, encoder, stepper, GEAR_RATIO);
+      Serial.println("Finished homing");
+      Serial.println(encoder.getPosition());
 
-  //     Serial.println("Finished homing");
+      delay(1000);
+      break;
 
-  //     delay(1000);
-  //     break;
+    }
 
-  //   }
-
-  //   delayMicroseconds(hallSensorUpdatePeriod);
-  // }
+    delayMicroseconds(hallSensorUpdatePeriod);
+  }
 
 } 
 
@@ -102,7 +108,7 @@ void setup() {
   
   home();
   
-  // Serial.println(encoder.getCumulativePosition()/GEAR_RATIO);
+  Serial.println(encoder.getPosition());
 
   // Waypoint trajectory[] = {
   //   {0,          0,      0},        // start at 0 rad, velocity 0 at t=0 ms

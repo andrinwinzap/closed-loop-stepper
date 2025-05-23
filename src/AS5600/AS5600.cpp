@@ -1,12 +1,12 @@
 #include "AS5600.h"
 
-AS5600::AS5600(TwoWire &wirePort, uint8_t address)
-    : _wire(&wirePort), _address(address) {}
+AS5600::AS5600(float _gear_ratio, TwoWire &wirePort, uint8_t address)
+    : _gear_ratio(_gear_ratio), _wire(&wirePort), _address(address) {}
 
 bool AS5600::begin() {
     _wire->begin();
     _lastUpdate = millis();
-    _lastPosition = getPosition();
+    _lastRawAngle = getRawAngle();
     return true;
 }
 
@@ -34,22 +34,14 @@ uint16_t AS5600::read12bit(uint8_t regHigh) {
     return ((high << 8) | low) & 0x0FFF;
 }
 
-uint16_t AS5600::getRawPosition() {
-    return read12bit(0x0E);
-}
-
-float AS5600::rawToRadians(uint16_t raw) {
-    return (raw * 2*PI) / 4096.0;
-}
-
-float AS5600::getPosition() {
-    return rawToRadians(getRawPosition());
+float AS5600::getRawAngle() {
+    return (read12bit(0x0E) * 2*PI) / 4096.0;
 }
 
 void AS5600::update() {
-    float current = getPosition();
+    float current = getRawAngle();
     unsigned long now = millis();
-    float delta = current - _lastPosition;
+    float delta = current - _lastRawAngle;
 
     // Handle rollover
     if (delta > PI) {
@@ -58,24 +50,24 @@ void AS5600::update() {
         delta += 2*PI;
     }
 
-    _cumulativePosition += delta;
+    _position += delta;
 
     float dt = (now - _lastUpdate) / 1000.0;  // seconds
     if (dt > 0) {
         _speed = delta / dt;
     }
 
-    _lastPosition = current;
+    _lastRawAngle = current;
     _lastUpdate = now;
 }
 
-float AS5600::getCumulativePosition() {
+float AS5600::getPosition() {
     update();
-    return _cumulativePosition;
+    return _position / _gear_ratio;
 }
 
 float AS5600::getSpeed() {
-    return _speed;
+    return _speed / _gear_ratio;
 }
 
 bool AS5600::magnetDetected() {
@@ -83,8 +75,8 @@ bool AS5600::magnetDetected() {
     return (status & (1 << 5)) != 0;
 }
 
-void AS5600::setCumulativePosition(float angle) {
-    _cumulativePosition = angle;
-    _lastPosition = getPosition();
+void AS5600::setPosition(float angle) {
+    _position = angle;
+    _lastRawAngle = getRawAngle();
 }
 

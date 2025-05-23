@@ -91,7 +91,7 @@ void execute_trajectory_segment(const Waypoint &wp1, const Waypoint &wp2, AS5600
   unsigned long last_control_loop_timestamp = now;
   unsigned long last_serial_print_timestamp = now;
   float last_control_speed = 0;
-  float filtered_vel = encoder.getSpeed() / float(gear_ratio);
+  float filtered_vel = encoder.getSpeed();
 
   bool stalled = false;
   unsigned long stall_start_time = 0;
@@ -118,8 +118,8 @@ void execute_trajectory_segment(const Waypoint &wp1, const Waypoint &wp2, AS5600
       float desired_pos = hermiteInterpolate(wp1, wp2, elapsed);
       float desired_vel = hermiteVelocity   (wp1, wp2, elapsed);
 
-      float measured_pos = encoder.getCumulativePosition() / float(gear_ratio);
-      float measured_vel = encoder.getSpeed() / float(gear_ratio);
+      float measured_pos = encoder.getPosition();
+      float measured_vel = encoder.getSpeed();
       filtered_vel = vel_filter_alpha * measured_vel + (1 - vel_filter_alpha) * filtered_vel;
 
       float pos_error = desired_pos - measured_pos;
@@ -133,7 +133,7 @@ void execute_trajectory_segment(const Waypoint &wp1, const Waypoint &wp2, AS5600
             stalled = true;
             Serial.println("STALLED!");
             new_start = {
-                      encoder.getCumulativePosition() / float(gear_ratio),
+                      encoder.getPosition(),
                       0.0f,
                       elapsed
                     };
@@ -209,7 +209,7 @@ void move_to(float target_position, AS5600 &encoder, Stepper &stepper, float gea
     if (now - last_control_time >= control_interval) {
       float dt = (now - last_control_time) * 0.001f; // convert ms to seconds
 
-      float current_position = encoder.getCumulativePosition() / gear_ratio;
+      float current_position = encoder.getPosition();
       float pos_error = target_position - current_position;
 
       // If within tolerance, stop and break loop
