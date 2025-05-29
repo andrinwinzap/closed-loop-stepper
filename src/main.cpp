@@ -119,12 +119,7 @@
 
 #include <Arduino.h>
 #include <Trajectory/Trajectory.h>
-
-constexpr uint8_t START_BYTE = 0xAA;
-constexpr uint8_t ESCAPE_BYTE = 0xAB;
-constexpr uint8_t ESCAPE_MASK = 0x20;
-
-constexpr size_t PAYLOAD_BUFFER_SIZE = 1024;
+#include <SerialProtocol/SerialProtocol.h>
 
 enum Command : uint8_t {
     PING = 0x01,
@@ -134,49 +129,6 @@ enum Command : uint8_t {
     ACK  = 0xEE,
     NACK = 0xFF
 };
-
-enum class State {
-    WAIT_START,
-    READ_CMD,
-    READ_LEN,
-    READ_PAYLOAD,
-    READ_CHECKSUM,
-    VALIDATE,
-    DISPATCH
-};
-
-void updateCrc8(uint8_t& crc8, uint8_t byte) {
-        crc8 ^= byte;
-        for (int i = 0; i < 8; ++i) {
-            crc8 = (crc8 & 0x80)
-                  ? (crc8 << 1) ^ 0x07
-                  : (crc8 << 1);
-        }
-    }
-
-uint8_t crc8(const uint8_t* data, size_t length) {
-    uint8_t crc = 0x00;
-    for (size_t i = 0; i < length; ++i) {
-        updateCrc8(crc, data[i]);
-    }
-    return crc;
-}
-
-size_t escape_data(uint8_t* data, size_t length, uint8_t* output, size_t max_output_len) {
-    size_t output_index = 0;
-    for (size_t i = 0; i<length; i++) {
-        uint8_t b = data[i];
-        if (b == START_BYTE || b == ESCAPE_BYTE) {
-            if (output_index + 2 > max_output_len) break;  // prevent overflow
-            output[output_index++] = ESCAPE_BYTE;
-            output[output_index++] = b ^ ESCAPE_MASK;
-        } else {
-            if (output_index + 1 > max_output_len) break;
-            output[output_index++] = b;
-        }
-    }
-    return output_index; 
-}
 
 void printTrajectory(Trajectory& traj) {
     Serial.println(traj.length);
@@ -192,96 +144,7 @@ void printTrajectory(Trajectory& traj) {
                 }
 }
 
-class SerialParser {
-public:
-    State state = State::WAIT_START;
-    void parse(uint8_t byte) {
-
-        if (byte == START_BYTE) {
-            reset();
-            state = State::READ_CMD;
-            return;
-        }
-
-        if (state != State::WAIT_START) {
-            if (escapeNext) {
-                byte ^= ESCAPE_MASK;
-                escapeNext = false;
-            } else if (byte == ESCAPE_BYTE) {
-                escapeNext = true;
-                return;
-            }
-        }
-
-        switch (state) {
-            case State::READ_CMD:
-                cmd = byte;
-                updateCrc8(crc8_acc, byte);
-                state = State::READ_LEN;
-                break;
-
-            case State::READ_LEN:
-                if (len_bytes_read == 0) {
-                    len = byte;
-                    updateCrc8(crc8_acc, byte);
-                    len_bytes_read = 1;
-                } else {
-                    len |= (byte << 8);
-                    updateCrc8(crc8_acc, byte);
-                    len_bytes_read = 0;
-                    payload_bytes_read = 0;
-
-                    if (len > 0 && len <= PAYLOAD_BUFFER_SIZE) {
-                        state = State::READ_PAYLOAD;
-                    } else if (len == 0) {
-                        state = State::READ_CHECKSUM;
-                    } else {
-                        Serial.println("Payload too large!");
-                        reset();
-                    }
-                }
-                break;
-
-            
-            case State::READ_PAYLOAD:
-                updateCrc8(crc8_acc, byte);
-                if (payload_buffer_len < PAYLOAD_BUFFER_SIZE) payload_buffer[payload_buffer_len++] = byte;
-                payload_bytes_read++;
-                if (payload_bytes_read >= len) {
-                   state = State::READ_CHECKSUM;
-                }
-                break;
-
-            case State::READ_CHECKSUM:
-                checksum = byte;
-                State::VALIDATE;
-                validate();
-                break;
-
-            default:
-                reset();
-        }
-    }
-private:
-    uint8_t payload_buffer[PAYLOAD_BUFFER_SIZE];
-    size_t payload_buffer_len = 0;
-    size_t payload_bytes_read = 0;
-    uint16_t len;
-    uint8_t len_bytes_read = 0;
-
-    uint8_t cmd, checksum;
-    uint8_t crc8_acc = 0x00;
-    bool escapeNext = false;
-
-    void validate() {
-        if (crc8_acc == checksum) {
-            dispatch();
-        } else {
-            Serial.println("Checksum failed!");
-        }
-    }
-
-    void dispatch() {
+void handle_commands(uint8_t cmd, const uint8_t* payload_buffer, size_t payload_buffer_len) {
         if (cmd == TRAJ) {
             Trajectory traj(payload_buffer, payload_buffer_len);
             if (traj.length>0) {
@@ -303,23 +166,9 @@ private:
         }
     }
 
-    void reset() {
-        state = State::WAIT_START;
-        payload_buffer_len = 0;
-        payload_bytes_read = 0;
-        len = 0;
-        len_bytes_read = 0;
-        crc8_acc = 0x00;
-        escapeNext = false;
-    }
-
-};
-
-SerialParser parser;
+SerialParser parser(handle_commands);
 
 void setup() {
-
-
     Serial.begin(115200);
 }
 
