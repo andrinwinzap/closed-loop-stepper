@@ -125,6 +125,74 @@ constexpr uint8_t ESCAPE_MASK = 0x20;
 
 constexpr size_t PAYLOAD_BUFFER_SIZE = 1024;
 
+#define MAX_WAYPOINTS 64
+#define TRAJ_MAX_SIZE (1 + MAX_WAYPOINTS * (4 + 4 + 4))
+
+struct Waypoint {
+    float position;             // 4 bytes
+    float velocity;             // 4 bytes
+    uint32_t timestamp;         // 4 bytes
+};
+
+struct Trajectory {
+    Waypoint waypoints[MAX_WAYPOINTS];
+    size_t length;              // usually 2 or 4 bytes (depends on platform)
+};
+
+
+void writeFloatLE(uint8_t* buf, float value) {
+    memcpy(buf, &value, sizeof(float));  // assumes IEEE 754
+}
+
+void writeUint32LE(uint8_t* buf, uint32_t value) {
+    buf[0] = value & 0xFF;
+    buf[1] = (value >> 8) & 0xFF;
+    buf[2] = (value >> 16) & 0xFF;
+    buf[3] = (value >> 24) & 0xFF;
+}
+
+size_t serializeTrajectory(const Trajectory& traj, uint8_t* outBuffer, size_t maxLen) {
+    if (traj.length > MAX_WAYPOINTS || maxLen < 1 + traj.length * 12) return 0;
+
+    size_t index = 0;
+    outBuffer[index++] = static_cast<uint8_t>(traj.length);  // 1 byte for length
+
+    for (size_t i = 0; i < traj.length; ++i) {
+        writeFloatLE(&outBuffer[index], traj.waypoints[i].position); index += 4;
+        writeFloatLE(&outBuffer[index], traj.waypoints[i].velocity); index += 4;
+        writeUint32LE(&outBuffer[index], traj.waypoints[i].timestamp); index += 4;
+    }
+
+    return index; // number of bytes written
+}
+
+float readFloatLE(const uint8_t* buf) {
+    float f;
+    memcpy(&f, buf, sizeof(float));
+    return f;
+}
+
+uint32_t readUint32LE(const uint8_t* buf) {
+    return buf[0] | (buf[1] << 8) | (buf[2] << 16) | (buf[3] << 24);
+}
+
+bool deserializeTrajectory(const uint8_t* data, size_t len, Trajectory& outTraj) {
+    if (len < 1) return false;
+    size_t index = 0;
+    uint8_t count = data[index++];
+
+    if (count > MAX_WAYPOINTS || len < 1 + count * 12) return false;
+
+    outTraj.length = count;
+    for (size_t i = 0; i < count; ++i) {
+        outTraj.waypoints[i].position = readFloatLE(&data[index]); index += 4;
+        outTraj.waypoints[i].velocity = readFloatLE(&data[index]); index += 4;
+        outTraj.waypoints[i].timestamp = readUint32LE(&data[index]); index += 4;
+    }
+
+    return true;
+}
+
 enum Command : uint8_t {
     PING = 0x01,
     HOME = 0x02,
@@ -159,6 +227,20 @@ uint8_t crc8(const uint8_t* data, size_t length) {
         updateCrc8(crc, data[i]);
     }
     return crc;
+}
+
+void printTrajectory(Trajectory& traj) {
+    Serial.println(traj.length);
+                for (size_t i = 0; i < traj.length; ++i) {
+                    Serial.print("Waypoint ");
+                    Serial.print(i);
+                    Serial.print(": pos=");
+                    Serial.print(traj.waypoints[i].position, 6);
+                    Serial.print(", vel=");
+                    Serial.print(traj.waypoints[i].velocity, 6);
+                    Serial.print(", time=");
+                    Serial.println(traj.waypoints[i].timestamp);
+                }
 }
 
 class SerialParser {
@@ -251,15 +333,25 @@ private:
     }
 
     void dispatch() {
-        Serial.print("Comand: 0x");
-        Serial.println(cmd, HEX);
-        Serial.print("Payload: ");
-        for (int i=0; i<payload_buffer_len; i++) {
-            Serial.print("0x");
-            Serial.print(payload[i], HEX);
-            Serial.print(" ");
+        if (cmd == TRAJ) {
+            Trajectory traj;
+            if (deserializeTrajectory(payload, payload_buffer_len, traj)) {
+                Serial.println("Successfully deserialized trajectory.");
+                printTrajectory(traj);
+            } else {
+                Serial.println("Failed to deserialize trajectory.");
+            }
+        } else {
+            Serial.print("Command: 0x");
+            Serial.println(cmd, HEX);
+            Serial.print("Payload: ");
+            for (int i = 0; i < payload_buffer_len; i++) {
+                Serial.print("0x");
+                Serial.print(payload[i], HEX);
+                Serial.print(" ");
+            }
+            Serial.println("");
         }
-        Serial.println("");
     }
 
     void reset() {
