@@ -85,7 +85,6 @@ void SerialParser::parse(uint8_t byte) {
                     len |= (byte << 8);
                     crc8(crc8_acc, byte);
                     len_bytes_read = 0;
-                    payload_bytes_read = 0;
 
                     if (len > 0 && len <= PAYLOAD_BUFFER_SIZE) {
                         state = ParserState::READ_PAYLOAD;
@@ -102,8 +101,7 @@ void SerialParser::parse(uint8_t byte) {
             case ParserState::READ_PAYLOAD:
                 crc8(crc8_acc, byte);
                 if (payload_buffer_len < PAYLOAD_BUFFER_SIZE) payload_buffer[payload_buffer_len++] = byte;
-                payload_bytes_read++;
-                if (payload_bytes_read >= len) {
+                if (payload_buffer_len >= len) {
                    state = ParserState::READ_CHECKSUM;
                 }
                 break;
@@ -130,7 +128,6 @@ void SerialParser::validate() {
 void SerialParser::reset() {
         state = ParserState::WAIT_START;
         payload_buffer_len = 0;
-        payload_bytes_read = 0;
         len = 0;
         len_bytes_read = 0;
         crc8_acc = 0x00;

@@ -33,7 +33,6 @@ private:
     ParserState state = ParserState::WAIT_START;
     uint8_t payload_buffer[PAYLOAD_BUFFER_SIZE];
     size_t payload_buffer_len = 0;
-    size_t payload_bytes_read = 0;
     uint16_t len;
     uint8_t len_bytes_read = 0;
     uint8_t cmd, checksum;
