@@ -17,20 +17,38 @@ uint8_t crc8(const uint8_t* data, size_t length) {
     return crc;
 }
 
-size_t escape_data(uint8_t* data, size_t length, uint8_t* output, size_t max_output_len) {
-    size_t output_index = 0;
+void SerialSender::writeUint16LE(uint8_t* buffer, uint16_t value) {
+    buffer[0] = (uint8_t)(value & 0xFF);
+    buffer[1] = (uint8_t)((value >> 8) & 0xFF);
+}
+
+void SerialSender::send_packet(uint8_t cmd, const uint8_t* payload, uint16_t length) {
+    size_t index = 0;
+    packet_buffer[index++] = cmd;
+    writeUint16LE(&packet_buffer[index], length);
+    index += 2;
+    for (uint32_t i=0; i<length; i++) {
+        packet_buffer[index++] = payload[i];
+    }
+    packet_buffer[index] = crc8(packet_buffer, index++);
+    escape_packet(packet_buffer, index);
+    Serial.write(START_BYTE);
+    Serial.write(escape_buffer, escape_buffer_index);
+}
+
+void SerialSender::escape_packet(uint8_t* data, size_t length) {
+    escape_buffer_index = 0;
     for (size_t i = 0; i<length; i++) {
         uint8_t b = data[i];
         if (b == START_BYTE || b == ESCAPE_BYTE) {
-            if (output_index + 2 > max_output_len) break;  // prevent overflow
-            output[output_index++] = ESCAPE_BYTE;
-            output[output_index++] = b ^ ESCAPE_MASK;
+            if (escape_buffer_index + 2 > MAX_PACKET_BUFFER_SIZE*2) break;  // prevent overflow
+            escape_buffer[escape_buffer_index++] = ESCAPE_BYTE;
+            escape_buffer[escape_buffer_index++] = b ^ ESCAPE_MASK;
         } else {
-            if (output_index + 1 > max_output_len) break;
-            output[output_index++] = b;
+            if (escape_buffer_index + 1 > MAX_PACKET_BUFFER_SIZE*2) break;
+            escape_buffer[escape_buffer_index++] = b;
         }
     }
-    return output_index; 
 }
 
 void SerialParser::parse(uint8_t byte) {

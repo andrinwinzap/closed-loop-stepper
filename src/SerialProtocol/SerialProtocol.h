@@ -8,6 +8,7 @@ constexpr uint8_t ESCAPE_BYTE = 0xAB;
 constexpr uint8_t ESCAPE_MASK = 0x20;
 
 constexpr size_t PAYLOAD_BUFFER_SIZE = 1024;
+constexpr size_t MAX_PACKET_BUFFER_SIZE = PAYLOAD_BUFFER_SIZE + 4;
 
 enum class ParserState {
     WAIT_START,
@@ -21,8 +22,6 @@ enum class ParserState {
 
 void crc8(uint8_t& crc8, uint8_t byte);
 uint8_t crc8(const uint8_t* data, size_t length);
-
-size_t escape_data(uint8_t* data, size_t length, uint8_t* output, size_t max_output_len);
 
 class SerialParser {
 public:
@@ -49,6 +48,18 @@ private:
     void dispatch();
     void reset();
 
+};
+
+class SerialSender {
+public:
+    void send_packet(uint8_t cmd, const uint8_t* payload, uint16_t length);
+
+private:
+    size_t escape_buffer_index = 0;
+    uint8_t packet_buffer[MAX_PACKET_BUFFER_SIZE];
+    uint8_t escape_buffer[MAX_PACKET_BUFFER_SIZE*2];
+    void escape_packet(uint8_t* data, size_t length);
+    void writeUint16LE(uint8_t* buffer, uint16_t value);
 };
 
 #endif
