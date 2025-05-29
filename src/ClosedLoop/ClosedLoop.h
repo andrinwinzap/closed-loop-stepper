@@ -1,5 +1,5 @@
-#ifndef TRAJECTORY_H
-#define TRAJECTORY_H
+#ifndef CLOSEDLOOP_H
+#define CLOSEDLOOP_H
 
 #include <Arduino.h>
 #include <AS5600/AS5600.h>

@@ -1,4 +1,4 @@
-#include "Trajectory.h"
+#include "ClosedLoop.h"
 
 // Hermite interpolation taking elapsed time (ms) directly
 float hermiteInterpolate(const Waypoint &wp1,
