@@ -41,11 +41,11 @@ void SerialSender::escape_packet(uint8_t* data, size_t length) {
     for (size_t i = 0; i<length; i++) {
         uint8_t b = data[i];
         if (b == START_BYTE || b == ESCAPE_BYTE) {
-            if (escape_buffer_index + 2 > MAX_PACKET_BUFFER_SIZE*2) break;  // prevent overflow
+            if (escape_buffer_index + 2 > sizeof(escape_buffer)) break;  // prevent overflow
             escape_buffer[escape_buffer_index++] = ESCAPE_BYTE;
             escape_buffer[escape_buffer_index++] = b ^ ESCAPE_MASK;
         } else {
-            if (escape_buffer_index + 1 > MAX_PACKET_BUFFER_SIZE*2) break;
+            if (escape_buffer_index + 1 > sizeof(escape_buffer)) break;
             escape_buffer[escape_buffer_index++] = b;
         }
     }
