@@ -229,6 +229,22 @@ uint8_t crc8(const uint8_t* data, size_t length) {
     return crc;
 }
 
+size_t escape_data(uint8_t* data, size_t length, uint8_t* output, size_t max_output_len) {
+    size_t output_index = 0;
+    for (size_t i = 0; i<length; i++) {
+        uint8_t b = data[i];
+        if (b == START_BYTE || b == ESCAPE_BYTE) {
+            if (output_index + 2 > max_output_len) break;  // prevent overflow
+            output[output_index++] = ESCAPE_BYTE;
+            output[output_index++] = b ^ ESCAPE_MASK;
+        } else {
+            if (output_index + 1 > max_output_len) break;
+            output[output_index++] = b;
+        }
+    }
+    return output_index; 
+}
+
 void printTrajectory(Trajectory& traj) {
     Serial.println(traj.length);
                 for (size_t i = 0; i < traj.length; ++i) {
