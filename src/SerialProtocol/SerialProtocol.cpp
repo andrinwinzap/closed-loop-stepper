@@ -1,11 +1,11 @@
 #include "SerialProtocol.h"
 
-void crc8(uint8_t& crc8, uint8_t byte) {
-        crc8 ^= byte;
+void crc8(uint8_t& crc, uint8_t byte) {
+        crc ^= byte;
         for (int i = 0; i < 8; ++i) {
-            crc8 = (crc8 & 0x80)
-                  ? (crc8 << 1) ^ 0x07
-                  : (crc8 << 1);
+            crc = (crc & 0x80)
+                  ? (crc << 1) ^ 0x07
+                  : (crc << 1);
         }
     }
 
@@ -30,7 +30,8 @@ void SerialSender::send_packet(uint8_t cmd, const uint8_t* payload, uint16_t len
     for (uint32_t i=0; i<length; i++) {
         packet_buffer[index++] = payload[i];
     }
-    packet_buffer[index] = crc8(packet_buffer, index++);
+    uint8_t crc = crc8(packet_buffer, index);
+    packet_buffer[index++] = crc;
     escape_packet(packet_buffer, index);
     Serial.write(START_BYTE);
     Serial.write(escape_buffer, escape_buffer_index);
