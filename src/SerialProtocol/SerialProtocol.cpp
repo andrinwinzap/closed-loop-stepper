@@ -110,7 +110,7 @@ void SerialParser::parse(uint8_t byte) {
 
             case ParserState::READ_CHECKSUM:
                 checksum = byte;
-                ParserState::VALIDATE;
+                state = ParserState::WAIT_START;
                 validate();
                 break;
 

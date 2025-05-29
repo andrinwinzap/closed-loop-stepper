@@ -15,9 +15,7 @@ enum class ParserState {
     READ_CMD,
     READ_LEN,
     READ_PAYLOAD,
-    READ_CHECKSUM,
-    VALIDATE,
-    DISPATCH
+    READ_CHECKSUM
 };
 
 void crc8(uint8_t& crc8, uint8_t byte);
