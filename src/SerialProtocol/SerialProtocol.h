@@ -13,6 +13,8 @@ constexpr size_t MAX_PACKET_SIZE = MAX_PAYLOAD_SIZE + 4; // Max unescaped packet
 constexpr size_t MAX_ESCAPED_PACKET_SIZE = MAX_PACKET_SIZE * 2;  // worst case
 static constexpr size_t CMD_QUEUE_SIZE = 8;
 
+constexpr uint8_t CRC8_POLY = 0x07;
+
 enum class ParserState {
     WAIT_START,
     READ_CMD,

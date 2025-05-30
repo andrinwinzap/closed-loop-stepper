@@ -19,7 +19,7 @@ void SerialParser::update_crc8(uint8_t byte) {
     crc8_acc ^= byte;
     for (int i = 0; i < 8; ++i) {
         crc8_acc = (crc8_acc & 0x80)
-                ? (crc8_acc << 1) ^ 0x07
+                ? (crc8_acc << 1) ^ CRC8_POLY
                 : (crc8_acc << 1);
     }
 }
@@ -30,7 +30,7 @@ uint8_t SerialProtocol::crc8(const uint8_t* data, size_t len) {
         crc ^= data[i];
         for (int i = 0; i < 8; ++i) {
             crc = (crc & 0x80)
-                  ? (crc << 1) ^ 0x07
+                  ? (crc << 1) ^ CRC8_POLY
                   : (crc << 1);
         }
     }
