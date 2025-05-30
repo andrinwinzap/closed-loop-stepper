@@ -126,11 +126,14 @@ void parse_cmd(uint8_t cmd, const uint8_t* payload, size_t payload_len);
 
 SerialProtocol com(Serial, parse_cmd);
 
+Trajectory *trajectory = nullptr;
+
 enum Command : uint8_t {
     PING = 0x01,
     HOME = 0x02,
     POS  = 0x03,
-    TRAJ = 0x04,
+    LOAD_TRAJ = 0x04,
+    EXEC_TRAJ = 0x05,
     ACK  = 0xEE,
     NACK = 0xFF
 };
@@ -170,15 +173,30 @@ void parse_cmd(uint8_t cmd, const uint8_t* payload, size_t payload_len) {
                 break;
             }
 
-            case TRAJ: {
-                Trajectory traj(payload, payload_len);
-                if (traj.length>0) {
-                    Serial.println("Successfully deserialized trajectory.");
-                    printTrajectory(traj); // Implement trajectory
-                } else {
-                    Serial.println("Failed to deserialize trajectory.");
+            case LOAD_TRAJ: {
+
+                if (trajectory != nullptr) {
+                    delete trajectory;
+                    trajectory = nullptr;
                 }
+
+                trajectory = new Trajectory(payload, payload_len);
+
+                if (trajectory->length == 0) {
+                    delete trajectory;
+                    trajectory = nullptr;
+                }
+                
+                com.send_packet(ACK);
                 break;
+
+            }
+
+            case EXEC_TRAJ: {
+                if (trajectory == nullptr) break;
+                printTrajectory(*trajectory); // Implement trajectory execution
+                break;
+
             }
 
             default: {
