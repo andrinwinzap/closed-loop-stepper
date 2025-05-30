@@ -5,13 +5,10 @@
 #include <SerialProtocol/SerialProtocol.h>
 #include <Stepper/Stepper.h>
 #include <Trajectory/Trajectory.h>
-#include <macros.h>
-
-#define HALL_PIN 15
-constexpr float GEAR_RATIO = 15.0;
+#include <Macros.h>
 
 AS5600 encoder(GEAR_RATIO);
-Stepper stepper(17, 16, 4, GEAR_RATIO);
+Stepper stepper(STEPPER_STEP_PIN, STEPPER_DIR_PIN, STEPPER_EN_PIN, GEAR_RATIO);
 
 SerialProtocol com(Serial);
 
@@ -31,37 +28,29 @@ enum cmdByte : uint8_t
 
 void home()
 {
-
-    const float homing_speed = 0.3;
-    const float homing_acceleration = 0.5;
-
     DBG_PRINTLN("Starting homing process...");
 
-    stepper.setSpeed(-homing_speed);
-    stepper.move(-PI / 8.0, homing_speed, homing_acceleration);
+    stepper.setSpeed(-HOMING_SPEED);
+    stepper.move(-PI / 8.0, HOMING_SPEED, HOMING_ACCELERATION);
 
     float first_bound = 0;
 
     stepper.start();
-    stepper.accelerate(0, homing_speed, homing_acceleration);
+    stepper.accelerate(0, HOMING_SPEED, HOMING_ACCELERATION);
 
-    float filteredHallSensorValue = analogRead(HALL_PIN);
-    float hallSensorAlpha = 0.2;
-    float hallSensorUpdateFrequency = 1000;
-
-    float hallSensorUpdatePeriod = 1e6 / hallSensorUpdateFrequency;
+    float filteredHallSensorValue = analogRead(HALL_EFFECT_SENSOR_PIN);
 
     while (true)
     {
 
         stepper.updateAcceleration();
-        int raw = analogRead(HALL_PIN);
-        filteredHallSensorValue = hallSensorAlpha * raw + (1 - hallSensorAlpha) * filteredHallSensorValue;
+        int raw = analogRead(HALL_EFFECT_SENSOR_PIN);
+        filteredHallSensorValue = HALL_EFFECT_SENSOR_ALPHA * raw + (1 - HALL_EFFECT_SENSOR_ALPHA) * filteredHallSensorValue;
 
         if (filteredHallSensorValue < 1)
             break;
 
-        delayMicroseconds(hallSensorUpdatePeriod);
+        delayMicroseconds(HALL_EFFECT_SENSOR_UPDATE_PERIOD);
     }
 
     first_bound = encoder.getPosition();
@@ -69,20 +58,20 @@ void home()
     while (true)
     {
 
-        int raw = analogRead(HALL_PIN);
-        filteredHallSensorValue = hallSensorAlpha * raw + (1 - hallSensorAlpha) * filteredHallSensorValue;
+        int raw = analogRead(HALL_EFFECT_SENSOR_PIN);
+        filteredHallSensorValue = HALL_EFFECT_SENSOR_ALPHA * raw + (1 - HALL_EFFECT_SENSOR_ALPHA) * filteredHallSensorValue;
 
         if (filteredHallSensorValue > 1)
             break;
 
-        delayMicroseconds(hallSensorUpdatePeriod);
+        delayMicroseconds(HALL_EFFECT_SENSOR_UPDATE_PERIOD);
     }
 
     float current_pos = encoder.getPosition();
     float home = (current_pos - first_bound) / 2;
     encoder.setPosition(current_pos - home);
 
-    stepper.accelerate(homing_speed, 0, homing_acceleration);
+    stepper.accelerate(HOMING_SPEED, 0, HOMING_ACCELERATION);
     while (stepper.updateAcceleration())
     {
         unsigned long start = micros();
@@ -199,15 +188,16 @@ void setup()
             ;
     }
 
+    encoder.setUpdateFrequency(ENCODER_UPDATE_FREQUENCY);
     DBG_PRINTLN("AS5600 ready.");
 
     stepper.begin();
     stepper.enable();
-    stepper.setMicrosteps(8);
-    stepper.setStepsPerRevolution(200);
+    stepper.setMicrosteps(STEPPER_MICROSTEPS);
+    stepper.setStepsPerRevolution(STEPPER_STEPS_PER_REVOLUTION);
     stepper.setMaxSpeed(1000000);
 
-    pinMode(HALL_PIN, INPUT_PULLUP);
+    pinMode(HALL_EFFECT_SENSOR_PIN, INPUT_PULLUP);
 }
 
 void loop()

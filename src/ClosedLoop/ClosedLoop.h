@@ -4,8 +4,8 @@
 #include <Arduino.h>
 #include <AS5600/AS5600.h>
 #include <Stepper/Stepper.h>
-#include <macros.h>
 #include <Trajectory/Trajectory.h>
+#include <Macros.h>
 
 float hermiteInterpolate(const Waypoint &wp1,
                          const Waypoint &wp2,

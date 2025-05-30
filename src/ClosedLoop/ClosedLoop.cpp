@@ -64,34 +64,12 @@ float hermiteVelocity(const Waypoint &wp1,
 
 void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, Stepper &stepper)
 {
-
-  ////////////////////////////////////////////////////////
-
-  const float Kf = 1.0;  // Velocity feed forward gain
-  const float Kp = 10.0; // Proportional gain
-  const float Kv = 1.0;  // Derivative gain
-
-  const int control_loop_frequency = 500; // Control loop frequency in Hz
-  const int serial_print_frequency = 100; // Serial print frequency in Hz
-  const bool debug_output = false;
-
-  float vel_filter_alpha = 0.1f; // Velocity low pass filter alpha
-
-  const float stall_vel_threshold = 0.1f;       // Stalling velocity threshold
-  const float stall_pos_error_threshold = 0.1f; // Stalling position-error threshold
-  const int stall_time_threshold = 50;          // Minimal duration for stalling detection
-
-  ////////////////////////////////////////////////////////
-
   DBG_PRINT("Waypoint | Position: ");
   DBG_PRINT(wp1.position);
   DBG_PRINT(" | Speed: ");
   DBG_PRINT(wp1.velocity);
   DBG_PRINT(" | Timestamp: ");
   DBG_PRINTLN(wp1.timestamp);
-
-  const int control_interval = 1000 / control_loop_frequency;
-  const int serial_print_interval = 1000 / serial_print_frequency;
 
   unsigned long now = millis();
   unsigned long motion_segment_start_time = now;
@@ -120,7 +98,7 @@ void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, S
       break;
     }
 
-    if (now - last_control_loop_timestamp >= control_interval)
+    if (now - last_control_loop_timestamp >= CONTROL_LOOP_INTERVAL)
     {
 
       float desired_pos = hermiteInterpolate(wp1, wp2, elapsed);
@@ -128,12 +106,12 @@ void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, S
 
       float measured_pos = encoder.getPosition();
       float measured_vel = encoder.getSpeed();
-      filtered_vel = vel_filter_alpha * measured_vel + (1 - vel_filter_alpha) * filtered_vel;
+      filtered_vel = CONTROL_LOOP_DEBUG_INTERVAL * measured_vel + (1 - CONTROL_LOOP_DEBUG_INTERVAL) * filtered_vel;
 
       float pos_error = desired_pos - measured_pos;
       float vel_error = desired_vel - filtered_vel;
 
-      if (filtered_vel < stall_vel_threshold && pos_error > stall_pos_error_threshold)
+      if (filtered_vel < STALL_VELOCITY_THRESHOLD && pos_error > STALL_POSITION_ERROR_THRESHOLD)
       {
         if (stall_start_time == 0)
         {
@@ -141,7 +119,7 @@ void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, S
         }
         else
         {
-          if (millis() - stall_start_time > stall_time_threshold)
+          if (millis() - stall_start_time > STALL_TIME_THRESHOLD)
           {
             stalled = true;
             DBG_PRINTLN("STALLED!");
@@ -158,9 +136,9 @@ void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, S
         stall_start_time = 0;
       }
 
-      float control_speed = Kf * desired_vel + Kp * pos_error + Kv * vel_error;
+      float control_speed = KF * desired_vel + KP * pos_error + KV * vel_error;
 
-      if (debug_output && millis() - last_serial_print_timestamp > serial_print_interval)
+      if (CONTROL_LOOP_DEBUG_OUTPUT && millis() - last_serial_print_timestamp > CONTROL_LOOP_DEBUG_INTERVAL)
       {
         DBG_PRINT("Position: ");
         DBG_PRINT(measured_pos);
@@ -222,14 +200,6 @@ void execute_trajectory(Trajectory *trajectory, AS5600 &encoder, Stepper &steppe
 
 void move_to(float target_position, AS5600 &encoder, Stepper &stepper)
 {
-  const float Kp = 1.0f;                  // Proportional gain for position error
-  const float position_tolerance = 0.01f; // radians or whatever unit used
-  const float max_speed = 6.0f;           // max speed limit (units/sec)
-  const float max_acceleration = 0.3f;    // max acceleration (units/sec²)
-
-  const int control_loop_frequency = 500; // Hz
-  const int control_interval = 1000 / control_loop_frequency;
-
   stepper.start();
 
   unsigned long last_control_time = millis();
@@ -238,7 +208,7 @@ void move_to(float target_position, AS5600 &encoder, Stepper &stepper)
   while (true)
   {
     unsigned long now = millis();
-    if (now - last_control_time >= control_interval)
+    if (now - last_control_time >= CONTROL_LOOP_INTERVAL)
     {
       float dt = (now - last_control_time) * 0.001f; // convert ms to seconds
 
@@ -246,7 +216,7 @@ void move_to(float target_position, AS5600 &encoder, Stepper &stepper)
       float pos_error = target_position - current_position;
 
       // If within tolerance, stop and break loop
-      if (fabs(pos_error) <= position_tolerance)
+      if (fabs(pos_error) <= POSITION_TOLERANCE)
       {
         stepper.setSpeed(0);
         DBG_PRINTLN("Position reached within tolerance. Stopping.");
@@ -254,16 +224,16 @@ void move_to(float target_position, AS5600 &encoder, Stepper &stepper)
       }
 
       // Proportional control speed command
-      float desired_speed = Kp * pos_error;
+      float desired_speed = KP_MOVE_TO * pos_error;
 
       // Clamp desired speed to max limits
-      if (desired_speed > max_speed)
-        desired_speed = max_speed;
-      else if (desired_speed < -max_speed)
-        desired_speed = -max_speed;
+      if (desired_speed > MAX_SPEED)
+        desired_speed = MAX_SPEED;
+      else if (desired_speed < -MAX_SPEED)
+        desired_speed = -MAX_SPEED;
 
       // Limit acceleration
-      float max_speed_change = max_acceleration * dt;
+      float max_speed_change = MAX_ACCELERATION * dt;
       float speed_diff = desired_speed - last_speed_command;
 
       if (speed_diff > max_speed_change)
