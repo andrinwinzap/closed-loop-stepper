@@ -123,7 +123,9 @@ void SerialParser::parse(uint8_t byte) {
         
         case ParserState::READ_PAYLOAD:
             update_crc8(byte);
-            if (payload_len < MAX_PAYLOAD_SIZE) payload[payload_len++] = byte;
+            if (payload_len < len && payload_len < MAX_PAYLOAD_SIZE) {
+                payload[payload_len++] = byte;
+            }
             if (payload_len >= len) {
                 state = ParserState::READ_CHECKSUM;
             }
