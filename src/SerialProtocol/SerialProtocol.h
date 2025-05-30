@@ -71,7 +71,7 @@ private:
     Stream& serial_port;
     SerialParser parser;
     uint8_t packet[MAX_PACKET_SIZE];
-    size_t escape_packet(uint8_t* data, size_t len, uint8_t* escaped_packet);
+    size_t escape_packet(const uint8_t* data, size_t len, uint8_t* escaped_packet) const;
     uint8_t crc8(const uint8_t* data, size_t len);
     void parse_serial();
 };
