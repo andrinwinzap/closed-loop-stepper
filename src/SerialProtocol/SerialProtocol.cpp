@@ -63,11 +63,11 @@ size_t SerialProtocol::escape_packet(const uint8_t* data, size_t len, uint8_t* e
     for (size_t i = 0; i<len; i++) {
         uint8_t b = data[i];
         if (b == START_BYTE || b == ESCAPE_BYTE) {
-            if (index + 1 >= sizeof(escaped_packet)) break;  // prevent overflow
+            if (index + 1 >= MAX_ESCAPED_PACKET_SIZE) break;  // prevent overflow
             escaped_packet[index++] = ESCAPE_BYTE;
             escaped_packet[index++] = b ^ ESCAPE_MASK;
         } else {
-            if (index >= sizeof(escaped_packet)) break;
+            if (index >= MAX_ESCAPED_PACKET_SIZE) break;
             escaped_packet[index++] = b;
         }
     }
