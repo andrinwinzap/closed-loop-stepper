@@ -122,13 +122,11 @@
 #include <SerialProtocol/SerialProtocol.h>
 #include <Serialization/Serialization.h>
 
-void parse_cmd(uint8_t cmd, const uint8_t* payload, size_t payload_len);
-
-SerialProtocol com(Serial, parse_cmd);
+SerialProtocol com(Serial);
 
 Trajectory *trajectory = nullptr;
 
-enum Command : uint8_t {
+enum cmdByte : uint8_t {
     PING = 0x01,
     HOME = 0x02,
     POS  = 0x03,
@@ -219,5 +217,8 @@ void setup() {
 }
 
 void loop() {
-    com.read_input();
+    if (com.available() > 0) {
+        const Command* cmd = com.read();
+        parse_cmd(cmd->cmd, cmd->payload, cmd->payload_len);
+    }
 }

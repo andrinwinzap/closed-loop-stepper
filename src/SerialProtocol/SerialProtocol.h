@@ -10,6 +10,7 @@ constexpr uint8_t ESCAPE_MASK = 0x20;
 
 constexpr size_t MAX_PAYLOAD_SIZE = 1024;
 constexpr size_t MAX_PACKET_SIZE = MAX_PAYLOAD_SIZE + 4;
+static constexpr size_t CMD_QUEUE_SIZE = 8;
 
 enum class ParserState {
     WAIT_START,
@@ -19,12 +20,16 @@ enum class ParserState {
     READ_CHECKSUM
 };
 
+struct Command {
+    uint8_t cmd;
+    uint8_t payload[MAX_PAYLOAD_SIZE];
+    size_t payload_len;
+};
+
 class SerialParser {
 public:
-    using DispatchCallback = void (*)(uint8_t cmd, const uint8_t* payload, size_t payload_len);
-
-    SerialParser(DispatchCallback cb = nullptr) : on_dispatch(cb) {}
-
+    size_t available() const { return queue_count; }
+    const Command* read();
     void parse(uint8_t byte);
 
 private:
@@ -37,21 +42,26 @@ private:
     uint8_t crc8_acc = 0x00;
     bool escape_next = false;
 
-    DispatchCallback on_dispatch = nullptr;
+    Command queue[CMD_QUEUE_SIZE];
+    size_t queue_head = 0;
+    size_t queue_tail = 0;
+    size_t queue_count = 0;
 
     void validate();
     void dispatch();
     void reset();
     void update_crc8(uint8_t byte);
+    void enqueue_command(uint8_t cmd, const uint8_t* payload, size_t payload_len);
 
 };
 
 class SerialProtocol {
 public:
-    SerialProtocol(Stream& serial, SerialParser::DispatchCallback cb = nullptr)
-        : serial_port(serial), parser(cb) {}
+    SerialProtocol(Stream& serial)
+        : serial_port(serial) {}
 
-    void read_input();
+    size_t available();
+    const Command* read();
     void send_packet(uint8_t cmd, const uint8_t* payload = nullptr, uint16_t payload_len = 0);
 
 private:
@@ -61,6 +71,7 @@ private:
     uint8_t escaped_packet[MAX_PACKET_SIZE*2];
     uint8_t escape_packet(uint8_t* data, size_t len);
     uint8_t crc8(const uint8_t* data, size_t len);
+    void parse_serial();
 };
 
 #endif

@@ -1,9 +1,18 @@
 #include "SerialProtocol.h"
 
-void SerialProtocol::read_input() {
-        while (serial_port.available()) {
-            parser.parse(serial_port.read());
-        }
+void SerialProtocol::parse_serial() {
+    while (serial_port.available()) {
+        parser.parse(serial_port.read());
+    }
+}
+
+size_t SerialProtocol::available() {
+        parse_serial();
+        return parser.available();
+    };
+
+const Command* SerialProtocol::read() {
+        return parser.read();
     };
 
 void SerialParser::update_crc8(uint8_t byte) {
@@ -132,7 +141,7 @@ void SerialParser::parse(uint8_t byte) {
 
 void SerialParser::validate() {
         if (crc8_acc == checksum) {
-            dispatch();
+            enqueue_command(cmd, payload, payload_len);
         } else {
             Serial.println("Checksum failed!");
         }
@@ -147,8 +156,24 @@ void SerialParser::reset() {
         escape_next = false;
     }
 
-void SerialParser::dispatch() {
-    if (on_dispatch) {
-        on_dispatch(cmd, payload, payload_len);
+void SerialParser::enqueue_command(uint8_t cmd, const uint8_t* payload, size_t payload_len) {
+    if (queue_count < CMD_QUEUE_SIZE) {
+        queue[queue_tail].cmd = cmd;
+        queue[queue_tail].payload_len = payload_len;
+        memcpy(queue[queue_tail].payload, payload, payload_len);
+        queue_tail = (queue_tail + 1) % CMD_QUEUE_SIZE;
+        queue_count++;
+    } else {
+        Serial.println("Command queue full, dropping command");
     }
 }
+
+const Command* SerialParser::read() {
+    if (queue_count == 0) return nullptr;
+    const Command* cmd = &queue[queue_head];
+    queue_head = (queue_head + 1) % CMD_QUEUE_SIZE;
+    queue_count--;
+    return cmd;
+}
+
+
