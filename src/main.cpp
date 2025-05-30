@@ -120,10 +120,11 @@
 #include <Arduino.h>
 #include <Trajectory/Trajectory.h>
 #include <SerialProtocol/SerialProtocol.h>
+#include <Serialization/Serialization.h>
 
-void handle_commands(uint8_t cmd, const uint8_t* payload, size_t payload_len);
+void parse_cmd(uint8_t cmd, const uint8_t* payload, size_t payload_len);
 
-SerialProtocol com(Serial, handle_commands);
+SerialProtocol com(Serial, parse_cmd);
 
 enum Command : uint8_t {
     PING = 0x01,
@@ -148,7 +149,7 @@ void printTrajectory(Trajectory& traj) {
                 }
 }
 
-void handle_commands(uint8_t cmd, const uint8_t* payload, size_t payload_len) {
+void parse_cmd(uint8_t cmd, const uint8_t* payload, size_t payload_len) {
 
         switch (cmd) {
             
@@ -162,9 +163,12 @@ void handle_commands(uint8_t cmd, const uint8_t* payload, size_t payload_len) {
                 }
                 break;
             }
+
             case POS: {
-                uint8_t payload[5] = {1,2,3,4,5};
-                com.send_packet(POS, payload, 5);
+                float pos = 1.1;
+                uint8_t payload[4];
+                writeFloatLE(payload, pos);
+                com.send_packet(POS, payload, 4);
                 break;
             }
 
@@ -182,7 +186,7 @@ void handle_commands(uint8_t cmd, const uint8_t* payload, size_t payload_len) {
             }
         };
     }
-    
+
 void setup() {
     Serial.begin(115200);
 }
