@@ -121,6 +121,10 @@
 #include <Trajectory/Trajectory.h>
 #include <SerialProtocol/SerialProtocol.h>
 
+void handle_commands(uint8_t cmd, const uint8_t* payload, size_t payload_len);
+
+SerialProtocol com(Serial, handle_commands);
+
 enum Command : uint8_t {
     PING = 0x01,
     HOME = 0x02,
@@ -145,29 +149,40 @@ void printTrajectory(Trajectory& traj) {
 }
 
 void handle_commands(uint8_t cmd, const uint8_t* payload, size_t payload_len) {
-        if (cmd == TRAJ) {
-            Trajectory traj(payload, payload_len);
-            if (traj.length>0) {
-                Serial.println("Successfully deserialized trajectory.");
-                printTrajectory(traj);
-            } else {
-                Serial.println("Failed to deserialize trajectory.");
+
+        switch (cmd) {
+            
+            case TRAJ: {
+                Trajectory traj(payload, payload_len);
+                if (traj.length>0) {
+                    Serial.println("Successfully deserialized trajectory.");
+                    printTrajectory(traj);
+                } else {
+                    Serial.println("Failed to deserialize trajectory.");
+                }
+                break;
             }
-        } else {
-            Serial.print("Command: 0x");
-            Serial.println(cmd, HEX);
-            Serial.print("Payload: ");
-            for (int i = 0; i < payload_len; i++) {
-                Serial.print("0x");
-                Serial.print(payload[i], HEX);
-                Serial.print(" ");
+            case POS: {
+                uint8_t payload[5] = {1,2,3,4,5};
+                com.send_packet(POS, payload, 5);
+                break;
             }
-            Serial.println("");
-        }
+
+            default: {
+                Serial.print("Command: 0x");
+                Serial.println(cmd, HEX);
+                Serial.print("Payload: ");
+                for (int i = 0; i < payload_len; i++) {
+                    Serial.print("0x");
+                    Serial.print(payload[i], HEX);
+                    Serial.print(" ");
+                }
+                Serial.println("");
+                break;
+            }
+        };
     }
-
-SerialProtocol com(Serial, handle_commands);
-
+    
 void setup() {
     Serial.begin(115200);
 }
