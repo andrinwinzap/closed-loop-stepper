@@ -4,7 +4,8 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-class AS5600 {
+class AS5600
+{
 public:
     AS5600(float gear_ratio, TwoWire &wirePort = Wire, uint8_t address = 0x36);
     bool begin();
@@ -38,8 +39,7 @@ private:
     uint16_t read12bit(uint8_t regHigh);
     float getRawAngle();
 
-    static AS5600* _instance;
+    static AS5600 *_instance;
 };
-
 
 #endif

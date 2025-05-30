@@ -20,7 +20,7 @@
 //   stepper.move(-PI/8.0, homing_speed, homing_acceleration);
 
 //   Serial.println("BlaBla");
-  
+
 //   float first_bound = 0;
 
 //   stepper.start();
@@ -33,7 +33,7 @@
 //   float hallSensorUpdatePeriod = 1e6 / hallSensorUpdateFrequency;
 
 //   while (true) {
-    
+
 //     stepper.updateAcceleration();
 //     int raw = analogRead(HALL_PIN);
 //     filteredHallSensorValue = hallSensorAlpha * raw + (1 - hallSensorAlpha) * filteredHallSensorValue;
@@ -46,7 +46,7 @@
 //   first_bound = encoder.getPosition();
 
 //   while (true) {
-    
+
 //     int raw = analogRead(HALL_PIN);
 //     filteredHallSensorValue = hallSensorAlpha * raw + (1 - hallSensorAlpha) * filteredHallSensorValue;
 
@@ -70,7 +70,7 @@
 //     Serial.println(encoder.getPosition());
 
 //     delay(1000);
-// } 
+// }
 
 // void setup() {
 
@@ -92,7 +92,7 @@
 //   stepper.setMaxSpeed(1000000);
 
 //   pinMode(HALL_PIN, INPUT_PULLUP);
-  
+
 //   home();
 
 //   Waypoint trajectory[] = {
@@ -100,7 +100,6 @@
 //     {PI/2.0,     0,   3000},
 //     {0,     0,   6000}
 //   };
-
 
 //   unsigned long motion_start_time = millis();
 //   execute_trajectory(trajectory, 3, encoder, stepper);
@@ -127,101 +126,117 @@ SerialProtocol com(Serial);
 
 Trajectory *trajectory = nullptr;
 
-enum cmdByte : uint8_t {
+enum cmdByte : uint8_t
+{
     PING = 0x01,
     HOME = 0x02,
-    POS  = 0x03,
+    POS = 0x03,
     LOAD_TRAJ = 0x04,
     EXEC_TRAJ = 0x05,
-    ACK  = 0xEE,
+    ACK = 0xEE,
     NACK = 0xFF
 };
 
-void printTrajectory(Trajectory& traj) {
+void printTrajectory(Trajectory &traj)
+{
     DBG_PRINTLN(traj.length);
-                for (size_t i = 0; i < traj.length; ++i) {
-                    DBG_PRINT("Waypoint ");
-                    DBG_PRINT(i);
-                    DBG_PRINT(": pos=");
-                    DBG_PRINT(traj.waypoints[i].position, 6);
-                    DBG_PRINT(", vel=");
-                    DBG_PRINT(traj.waypoints[i].velocity, 6);
-                    DBG_PRINT(", time=");
-                    DBG_PRINTLN(traj.waypoints[i].timestamp);
-                }
+    for (size_t i = 0; i < traj.length; ++i)
+    {
+        DBG_PRINT("Waypoint ");
+        DBG_PRINT(i);
+        DBG_PRINT(": pos=");
+        DBG_PRINT(traj.waypoints[i].position, 6);
+        DBG_PRINT(", vel=");
+        DBG_PRINT(traj.waypoints[i].velocity, 6);
+        DBG_PRINT(", time=");
+        DBG_PRINTLN(traj.waypoints[i].timestamp);
+    }
 }
 
-void parse_cmd(uint8_t cmd, const uint8_t* payload, size_t payload_len) {
+void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
+{
 
-        switch (cmd) {
-            
-            case PING: {
-                com.send_packet(ACK);
-                break;
-            }
+    switch (cmd)
+    {
 
-            case HOME: {
-                //Implement homing
-                com.send_packet(ACK);
-                break;
-            }
-
-            case POS: {
-                float pos = 1.1; // Implement encoder position
-                uint8_t payload[4];
-                writeFloatLE(payload, pos);
-                com.send_packet(POS, payload, 4);
-                break;
-            }
-
-            case LOAD_TRAJ: {
-
-                if (trajectory != nullptr) {
-                    delete trajectory;
-                    trajectory = nullptr;
-                }
-
-                trajectory = new Trajectory(payload, payload_len);
-
-                if (trajectory->length == 0) {
-                    delete trajectory;
-                    trajectory = nullptr;
-                }
-                
-                com.send_packet(ACK);
-                break;
-
-            }
-
-            case EXEC_TRAJ: {
-                if (trajectory == nullptr) break;
-                printTrajectory(*trajectory); // Implement trajectory execution
-                break;
-
-            }
-
-            default: {
-                DBG_PRINT("Command: 0x");
-                DBG_PRINTLN(cmd, HEX);
-                DBG_PRINT("Payload: ");
-                for (int i = 0; i < payload_len; i++) {
-                    DBG_PRINT("0x");
-                    DBG_PRINT(payload[i], HEX);
-                    DBG_PRINT(" ");
-                }
-                DBG_PRINTLN("");
-                break;
-            }
-        };
+    case PING:
+    {
+        com.send_packet(ACK);
+        break;
     }
 
-void setup() {
+    case HOME:
+    {
+        // Implement homing
+        com.send_packet(ACK);
+        break;
+    }
+
+    case POS:
+    {
+        float pos = 1.1; // Implement encoder position
+        uint8_t payload[4];
+        writeFloatLE(payload, pos);
+        com.send_packet(POS, payload, 4);
+        break;
+    }
+
+    case LOAD_TRAJ:
+    {
+
+        if (trajectory != nullptr)
+        {
+            delete trajectory;
+            trajectory = nullptr;
+        }
+
+        trajectory = new Trajectory(payload, payload_len);
+
+        if (trajectory->length == 0)
+        {
+            delete trajectory;
+            trajectory = nullptr;
+        }
+
+        com.send_packet(ACK);
+        break;
+    }
+
+    case EXEC_TRAJ:
+    {
+        if (trajectory == nullptr)
+            break;
+        printTrajectory(*trajectory); // Implement trajectory execution
+        break;
+    }
+
+    default:
+    {
+        DBG_PRINT("Command: 0x");
+        DBG_PRINTLN(cmd, HEX);
+        DBG_PRINT("Payload: ");
+        for (int i = 0; i < payload_len; i++)
+        {
+            DBG_PRINT("0x");
+            DBG_PRINT(payload[i], HEX);
+            DBG_PRINT(" ");
+        }
+        DBG_PRINTLN("");
+        break;
+    }
+    };
+}
+
+void setup()
+{
     Serial.begin(115200);
 }
 
-void loop() {
-    if (com.available() > 0) {
-        const Command* cmd = com.read();
+void loop()
+{
+    if (com.available() > 0)
+    {
+        const Command *cmd = com.read();
         parse_cmd(cmd->cmd, cmd->payload, cmd->payload_len);
     }
 }

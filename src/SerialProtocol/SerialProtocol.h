@@ -10,13 +10,14 @@ constexpr uint8_t ESCAPE_BYTE = 0xAB;
 constexpr uint8_t ESCAPE_MASK = 0x20;
 
 constexpr size_t MAX_PAYLOAD_SIZE = 1024;
-constexpr size_t MAX_PACKET_SIZE = MAX_PAYLOAD_SIZE + 4; // Max unescaped packet size = cmd (1) + len (2) + payload + checksum (1)
-constexpr size_t MAX_ESCAPED_PACKET_SIZE = MAX_PACKET_SIZE * 2;  // worst case
+constexpr size_t MAX_PACKET_SIZE = MAX_PAYLOAD_SIZE + 4;        // Max unescaped packet size = cmd (1) + len (2) + payload + checksum (1)
+constexpr size_t MAX_ESCAPED_PACKET_SIZE = MAX_PACKET_SIZE * 2; // worst case
 static constexpr size_t CMD_QUEUE_SIZE = 8;
 
 constexpr uint8_t CRC8_POLY = 0x07;
 
-enum class ParserState {
+enum class ParserState
+{
     WAIT_START,
     READ_CMD,
     READ_LEN,
@@ -24,16 +25,18 @@ enum class ParserState {
     READ_CHECKSUM
 };
 
-struct Command {
+struct Command
+{
     uint8_t cmd;
     uint8_t payload[MAX_PAYLOAD_SIZE];
     size_t payload_len;
 };
 
-class SerialParser {
+class SerialParser
+{
 public:
     size_t available() const { return queue_count; }
-    const Command* read();
+    const Command *read();
     void parse(uint8_t byte);
 
 private:
@@ -55,25 +58,25 @@ private:
     void dispatch();
     void reset();
     void update_crc8(uint8_t byte);
-    void enqueue_command(uint8_t cmd, const uint8_t* payload, size_t payload_len);
-
+    void enqueue_command(uint8_t cmd, const uint8_t *payload, size_t payload_len);
 };
 
-class SerialProtocol {
+class SerialProtocol
+{
 public:
-    SerialProtocol(Stream& serial)
+    SerialProtocol(Stream &serial)
         : serial_port(serial) {}
 
     size_t available();
-    const Command* read();
-    void send_packet(uint8_t cmd, const uint8_t* payload = nullptr, uint16_t payload_len = 0);
+    const Command *read();
+    void send_packet(uint8_t cmd, const uint8_t *payload = nullptr, uint16_t payload_len = 0);
 
 private:
-    Stream& serial_port;
+    Stream &serial_port;
     SerialParser parser;
     uint8_t packet[MAX_PACKET_SIZE];
-    size_t escape_packet(const uint8_t* data, size_t len, uint8_t* escaped_packet) const;
-    uint8_t crc8(const uint8_t* data, size_t len);
+    size_t escape_packet(const uint8_t *data, size_t len, uint8_t *escaped_packet) const;
+    uint8_t crc8(const uint8_t *data, size_t len);
     void parse_serial();
 };
 
