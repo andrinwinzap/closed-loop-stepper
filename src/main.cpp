@@ -165,11 +165,16 @@ void parse_cmd(uint8_t cmd, const uint8_t* payload, size_t payload_len) {
             }
 
             case POS: {
-                float pos = 1.1;
+                float pos = 1.1; // Implement encoder position
                 uint8_t payload[4];
                 writeFloatLE(payload, pos);
                 com.send_packet(POS, payload, 4);
                 break;
+            }
+
+            case HOME: {
+                //Implement homing
+                com.send_packet(ACK);
             }
 
             default: {
