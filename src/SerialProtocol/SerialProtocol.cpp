@@ -52,12 +52,13 @@ void SerialProtocol::send_packet(uint8_t cmd, const uint8_t* payload, uint16_t p
     uint8_t crc = crc8(packet, index);
     packet[index++] = crc;
 
-    size_t escaped_packet_len = escape_packet(packet, index);
+    uint8_t escaped_packet[MAX_ESCAPED_PACKET_SIZE];
+    size_t escaped_packet_len = escape_packet(packet, index, escaped_packet);
     serial_port.write(START_BYTE);
     serial_port.write(escaped_packet, escaped_packet_len);
 }
 
-size_t SerialProtocol::escape_packet(uint8_t* data, size_t len) {
+size_t SerialProtocol::escape_packet(uint8_t* data, size_t len, uint8_t* escaped_packet) {
     size_t index = 0;
     for (size_t i = 0; i<len; i++) {
         uint8_t b = data[i];
