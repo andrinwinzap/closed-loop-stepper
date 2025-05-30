@@ -29,26 +29,6 @@ Trajectory::Trajectory(const uint8_t* data, size_t len) {
     length = count;
 }
 
-float Trajectory::readFloatLE(const uint8_t* buf) {
-    float val;
-    memcpy(&val, buf, 4);
-    return val;
-}
-
-void Trajectory::writeFloatLE(uint8_t* buf, float value) {
-    memcpy(buf, &value, 4);
-}
-
-uint32_t Trajectory::readUint32LE(const uint8_t* buf) {
-    uint32_t val;
-    memcpy(&val, buf, 4);
-    return val;
-}
-
-void Trajectory::writeUint32LE(uint8_t* buf, uint32_t value) {
-    memcpy(buf, &value, 4);
-}
-
 size_t Trajectory::serialize(uint8_t* outBuffer, size_t maxLen) {
     size_t totalBytes = 1 + length * 12;
     if (maxLen < totalBytes) return 0;

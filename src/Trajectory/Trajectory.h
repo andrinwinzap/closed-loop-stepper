@@ -2,6 +2,7 @@
 #define TRAJECTORY_H
 
 #include <Arduino.h>
+#include <Serialization/Serialization.h>
 
 #define MAX_WAYPOINTS 64
 
@@ -21,10 +22,6 @@ public:
     Trajectory(const uint8_t* data, size_t len);
 
 private:
-    float readFloatLE(const uint8_t* buf);
-    void writeFloatLE(uint8_t* buf, float value);
-    uint32_t readUint32LE(const uint8_t* buf);
-    void writeUint32LE(uint8_t* buf, uint32_t value);
     size_t serialize(uint8_t* outBuffer, size_t maxLen);
 
 };

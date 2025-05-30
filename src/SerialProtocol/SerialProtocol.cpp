@@ -28,11 +28,6 @@ uint8_t SerialProtocol::crc8(const uint8_t* data, size_t len) {
     return crc;
 }
 
-void SerialProtocol::writeUint16LE(uint8_t* buffer, uint16_t value) {
-    buffer[0] = (uint8_t)(value & 0xFF);
-    buffer[1] = (uint8_t)((value >> 8) & 0xFF);
-}
-
 void SerialProtocol::send_packet(uint8_t cmd, const uint8_t* payload, uint16_t payload_len) {
     size_t index = 0;
     packet[index++] = cmd;

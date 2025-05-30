@@ -2,6 +2,7 @@
 #define SERIAL_PROTOCOL_H
 
 #include <Arduino.h>
+#include <Serialization/Serialization.h>
 
 constexpr uint8_t START_BYTE = 0xAA;
 constexpr uint8_t ESCAPE_BYTE = 0xAB;
@@ -59,7 +60,6 @@ private:
     uint8_t packet[MAX_PACKET_SIZE];
     uint8_t escaped_packet[MAX_PACKET_SIZE*2];
     uint8_t escape_packet(uint8_t* data, size_t len);
-    void writeUint16LE(uint8_t* buffer, uint16_t value);
     uint8_t crc8(const uint8_t* data, size_t len);
 };
 
