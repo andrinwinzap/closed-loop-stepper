@@ -9,7 +9,8 @@ constexpr uint8_t ESCAPE_BYTE = 0xAB;
 constexpr uint8_t ESCAPE_MASK = 0x20;
 
 constexpr size_t MAX_PAYLOAD_SIZE = 1024;
-constexpr size_t MAX_PACKET_SIZE = MAX_PAYLOAD_SIZE + 4;
+constexpr size_t MAX_PACKET_SIZE = MAX_PAYLOAD_SIZE + 4; // Max unescaped packet size = cmd (1) + len (2) + payload + checksum (1)
+constexpr size_t MAX_ESCAPED_PACKET_SIZE = MAX_PACKET_SIZE * 2;  // worst case
 static constexpr size_t CMD_QUEUE_SIZE = 8;
 
 enum class ParserState {
@@ -68,7 +69,7 @@ private:
     Stream& serial_port;
     SerialParser parser;
     uint8_t packet[MAX_PACKET_SIZE];
-    uint8_t escaped_packet[MAX_PACKET_SIZE*2];
+    uint8_t escaped_packet[MAX_ESCAPED_PACKET_SIZE];
     size_t escape_packet(uint8_t* data, size_t len);
     uint8_t crc8(const uint8_t* data, size_t len);
     void parse_serial();
