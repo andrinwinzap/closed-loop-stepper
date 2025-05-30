@@ -1,5 +1,11 @@
 #include "SerialProtocol.h"
 
+void SerialProtocol::read_input() {
+        while (serial_port.available()) {
+            parser.parse(serial_port.read());
+        }
+    };
+
 void SerialParser::update_crc8(uint8_t byte) {
         crc8_acc ^= byte;
         for (int i = 0; i < 8; ++i) {
@@ -9,9 +15,9 @@ void SerialParser::update_crc8(uint8_t byte) {
         }
     }
 
-uint8_t SerialSender::crc8(const uint8_t* data, size_t length) {
+uint8_t SerialProtocol::crc8(const uint8_t* data, size_t len) {
     uint8_t crc = 0x00;
-    for (size_t i = 0; i < length; ++i) {
+    for (size_t i = 0; i < len; ++i) {
         crc ^= data[i];
         for (int i = 0; i < 8; ++i) {
             crc = (crc & 0x80)
@@ -22,39 +28,40 @@ uint8_t SerialSender::crc8(const uint8_t* data, size_t length) {
     return crc;
 }
 
-void SerialSender::writeUint16LE(uint8_t* buffer, uint16_t value) {
+void SerialProtocol::writeUint16LE(uint8_t* buffer, uint16_t value) {
     buffer[0] = (uint8_t)(value & 0xFF);
     buffer[1] = (uint8_t)((value >> 8) & 0xFF);
 }
 
-void SerialSender::send_packet(uint8_t cmd, const uint8_t* payload, uint16_t length) {
+void SerialProtocol::send_packet(uint8_t cmd, const uint8_t* payload, uint16_t payload_len) {
     size_t index = 0;
-    packet_buffer[index++] = cmd;
-    writeUint16LE(&packet_buffer[index], length);
+    packet[index++] = cmd;
+    writeUint16LE(&packet[index], payload_len);
     index += 2;
-    for (uint32_t i=0; i<length; i++) {
-        packet_buffer[index++] = payload[i];
+    for (uint32_t i=0; i<payload_len; i++) {
+        packet[index++] = payload[i];
     }
-    uint8_t crc = crc8(packet_buffer, index);
-    packet_buffer[index++] = crc;
-    escape_packet(packet_buffer, index);
-    Serial.write(START_BYTE);
-    Serial.write(escape_buffer, escape_buffer_index);
+    uint8_t crc = crc8(packet, index);
+    packet[index++] = crc;
+    uint8_t escaped_packed_len = escape_packet(packet, index);
+    serial_port.write(START_BYTE);
+    serial_port.write(escaped_packet, escaped_packed_len);
 }
 
-void SerialSender::escape_packet(uint8_t* data, size_t length) {
-    escape_buffer_index = 0;
-    for (size_t i = 0; i<length; i++) {
+uint8_t SerialProtocol::escape_packet(uint8_t* data, size_t len) {
+    uint8_t index = 0;
+    for (size_t i = 0; i<len; i++) {
         uint8_t b = data[i];
         if (b == START_BYTE || b == ESCAPE_BYTE) {
-            if (escape_buffer_index + 2 > sizeof(escape_buffer)) break;  // prevent overflow
-            escape_buffer[escape_buffer_index++] = ESCAPE_BYTE;
-            escape_buffer[escape_buffer_index++] = b ^ ESCAPE_MASK;
+            if (index + 2 > sizeof(escaped_packet)) break;  // prevent overflow
+            escaped_packet[index++] = ESCAPE_BYTE;
+            escaped_packet[index++] = b ^ ESCAPE_MASK;
         } else {
-            if (escape_buffer_index + 1 > sizeof(escape_buffer)) break;
-            escape_buffer[escape_buffer_index++] = b;
+            if (index + 1 > sizeof(escaped_packet)) break;
+            escaped_packet[index++] = b;
         }
     }
+    return index;
 }
 
 void SerialParser::parse(uint8_t byte) {
@@ -92,7 +99,7 @@ void SerialParser::parse(uint8_t byte) {
                     update_crc8(byte);
                     len_bytes_read = 0;
 
-                    if (len > 0 && len <= PAYLOAD_BUFFER_SIZE) {
+                    if (len > 0 && len <= MAX_PAYLOAD_SIZE) {
                         state = ParserState::READ_PAYLOAD;
                     } else if (len == 0) {
                         state = ParserState::READ_CHECKSUM;
@@ -106,7 +113,7 @@ void SerialParser::parse(uint8_t byte) {
             
             case ParserState::READ_PAYLOAD:
                 update_crc8(byte);
-                if (payload_len < PAYLOAD_BUFFER_SIZE) payload[payload_len++] = byte;
+                if (payload_len < MAX_PAYLOAD_SIZE) payload[payload_len++] = byte;
                 if (payload_len >= len) {
                    state = ParserState::READ_CHECKSUM;
                 }

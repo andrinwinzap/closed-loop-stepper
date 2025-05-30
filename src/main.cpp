@@ -144,9 +144,9 @@ void printTrajectory(Trajectory& traj) {
                 }
 }
 
-void handle_commands(uint8_t cmd, const uint8_t* payload_buffer, size_t payload_buffer_len) {
+void handle_commands(uint8_t cmd, const uint8_t* payload, size_t payload_len) {
         if (cmd == TRAJ) {
-            Trajectory traj(payload_buffer, payload_buffer_len);
+            Trajectory traj(payload, payload_len);
             if (traj.length>0) {
                 Serial.println("Successfully deserialized trajectory.");
                 printTrajectory(traj);
@@ -157,24 +157,21 @@ void handle_commands(uint8_t cmd, const uint8_t* payload_buffer, size_t payload_
             Serial.print("Command: 0x");
             Serial.println(cmd, HEX);
             Serial.print("Payload: ");
-            for (int i = 0; i < payload_buffer_len; i++) {
+            for (int i = 0; i < payload_len; i++) {
                 Serial.print("0x");
-                Serial.print(payload_buffer[i], HEX);
+                Serial.print(payload[i], HEX);
                 Serial.print(" ");
             }
             Serial.println("");
         }
     }
 
-SerialParser parser(handle_commands);
+SerialProtocol com(Serial, handle_commands);
 
 void setup() {
     Serial.begin(115200);
 }
 
 void loop() {
-    while (Serial.available() > 0) {
-    uint8_t byte = Serial.read();
-    parser.parse(byte);
-  }
+    com.read_input();
 }

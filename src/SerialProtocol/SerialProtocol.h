@@ -7,8 +7,8 @@ constexpr uint8_t START_BYTE = 0xAA;
 constexpr uint8_t ESCAPE_BYTE = 0xAB;
 constexpr uint8_t ESCAPE_MASK = 0x20;
 
-constexpr size_t PAYLOAD_BUFFER_SIZE = 1024;
-constexpr size_t MAX_PACKET_BUFFER_SIZE = PAYLOAD_BUFFER_SIZE + 4;
+constexpr size_t MAX_PAYLOAD_SIZE = 1024;
+constexpr size_t MAX_PACKET_SIZE = MAX_PAYLOAD_SIZE + 4;
 
 enum class ParserState {
     WAIT_START,
@@ -28,7 +28,7 @@ public:
 
 private:
     ParserState state = ParserState::WAIT_START;
-    uint8_t payload[PAYLOAD_BUFFER_SIZE];
+    uint8_t payload[MAX_PAYLOAD_SIZE];
     size_t payload_len = 0;
     uint16_t len;
     uint8_t len_bytes_read = 0;
@@ -45,17 +45,22 @@ private:
 
 };
 
-class SerialSender {
+class SerialProtocol {
 public:
-    void send_packet(uint8_t cmd, const uint8_t* payload, uint16_t length);
+    SerialProtocol(Stream& serial, SerialParser::DispatchCallback cb = nullptr)
+        : serial_port(serial), parser(cb) {}
+
+    void read_input();
+    void send_packet(uint8_t cmd, const uint8_t* payload, uint16_t payload_len);
 
 private:
-    size_t escape_buffer_index = 0;
-    uint8_t packet_buffer[MAX_PACKET_BUFFER_SIZE];
-    uint8_t escape_buffer[MAX_PACKET_BUFFER_SIZE*2];
-    void escape_packet(uint8_t* data, size_t length);
+    Stream& serial_port;
+    SerialParser parser;
+    uint8_t packet[MAX_PACKET_SIZE];
+    uint8_t escaped_packet[MAX_PACKET_SIZE*2];
+    uint8_t escape_packet(uint8_t* data, size_t len);
     void writeUint16LE(uint8_t* buffer, uint16_t value);
-    uint8_t crc8(const uint8_t* data, size_t length);
+    uint8_t crc8(const uint8_t* data, size_t len);
 };
 
 #endif
