@@ -33,14 +33,19 @@ void SerialProtocol::send_packet(uint8_t cmd, const uint8_t* payload, uint16_t p
     packet[index++] = cmd;
     writeUint16LE(&packet[index], payload_len);
     index += 2;
-    for (uint32_t i=0; i<payload_len; i++) {
-        packet[index++] = payload[i];
+
+    if (payload != nullptr && payload_len > 0) {
+        for (uint32_t i = 0; i < payload_len; i++) {
+            packet[index++] = payload[i];
+        }
     }
+
     uint8_t crc = crc8(packet, index);
     packet[index++] = crc;
-    uint8_t escaped_packed_len = escape_packet(packet, index);
+
+    uint8_t escaped_packet_len = escape_packet(packet, index);
     serial_port.write(START_BYTE);
-    serial_port.write(escaped_packet, escaped_packed_len);
+    serial_port.write(escaped_packet, escaped_packet_len);
 }
 
 uint8_t SerialProtocol::escape_packet(uint8_t* data, size_t len) {

@@ -52,7 +52,7 @@ public:
         : serial_port(serial), parser(cb) {}
 
     void read_input();
-    void send_packet(uint8_t cmd, const uint8_t* payload, uint16_t payload_len);
+    void send_packet(uint8_t cmd, const uint8_t* payload = nullptr, uint16_t payload_len = 0);
 
 private:
     Stream& serial_port;
