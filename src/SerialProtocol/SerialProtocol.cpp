@@ -66,11 +66,11 @@ void SerialParser::parse(uint8_t byte) {
         }
 
         if (state != ParserState::WAIT_START) {
-            if (escapeNext) {
+            if (escape_next) {
                 byte ^= ESCAPE_MASK;
-                escapeNext = false;
+                escape_next = false;
             } else if (byte == ESCAPE_BYTE) {
-                escapeNext = true;
+                escape_next = true;
                 return;
             }
         }
@@ -106,8 +106,8 @@ void SerialParser::parse(uint8_t byte) {
             
             case ParserState::READ_PAYLOAD:
                 update_crc8(byte);
-                if (payload_buffer_len < PAYLOAD_BUFFER_SIZE) payload_buffer[payload_buffer_len++] = byte;
-                if (payload_buffer_len >= len) {
+                if (payload_len < PAYLOAD_BUFFER_SIZE) payload[payload_len++] = byte;
+                if (payload_len >= len) {
                    state = ParserState::READ_CHECKSUM;
                 }
                 break;
@@ -133,15 +133,15 @@ void SerialParser::validate() {
 
 void SerialParser::reset() {
         state = ParserState::WAIT_START;
-        payload_buffer_len = 0;
+        payload_len = 0;
         len = 0;
         len_bytes_read = 0;
         crc8_acc = 0x00;
-        escapeNext = false;
+        escape_next = false;
     }
 
 void SerialParser::dispatch() {
     if (on_dispatch) {
-        on_dispatch(cmd, payload_buffer, payload_buffer_len);
+        on_dispatch(cmd, payload, payload_len);
     }
 }

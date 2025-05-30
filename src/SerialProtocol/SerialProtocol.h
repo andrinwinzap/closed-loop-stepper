@@ -20,7 +20,7 @@ enum class ParserState {
 
 class SerialParser {
 public:
-    using DispatchCallback = void (*)(uint8_t cmd, const uint8_t* payload_buffer, size_t payload_buffer_len);
+    using DispatchCallback = void (*)(uint8_t cmd, const uint8_t* payload, size_t payload_len);
 
     SerialParser(DispatchCallback cb = nullptr) : on_dispatch(cb) {}
 
@@ -28,13 +28,13 @@ public:
 
 private:
     ParserState state = ParserState::WAIT_START;
-    uint8_t payload_buffer[PAYLOAD_BUFFER_SIZE];
-    size_t payload_buffer_len = 0;
+    uint8_t payload[PAYLOAD_BUFFER_SIZE];
+    size_t payload_len = 0;
     uint16_t len;
     uint8_t len_bytes_read = 0;
     uint8_t cmd, checksum;
     uint8_t crc8_acc = 0x00;
-    bool escapeNext = false;
+    bool escape_next = false;
 
     DispatchCallback on_dispatch = nullptr;
 
