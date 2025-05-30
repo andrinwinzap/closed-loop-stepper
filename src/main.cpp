@@ -24,6 +24,7 @@ enum cmdByte : uint8_t
     POS = 0x03,
     LOAD_TRAJ = 0x04,
     EXEC_TRAJ = 0x05,
+    FINISHED = 0x06,
     ACK = 0xEE,
     NACK = 0xFF
 };
@@ -126,6 +127,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
     {
         com.send_packet(ACK);
         home();
+        com.send_packet(FINISHED);
         break;
     }
 
