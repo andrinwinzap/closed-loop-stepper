@@ -209,14 +209,17 @@ void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, S
   DBG_PRINTLN(wp2.timestamp);
 }
 
-void execute_trajectory(Waypoint *arr, size_t length, AS5600 &encoder, Stepper &stepper)
+void execute_trajectory(Trajectory *trajectory, AS5600 &encoder, Stepper &stepper)
 {
-  for (size_t i = 0; i < length - 1; ++i)
+  if (trajectory == nullptr)
+    return;
+  for (size_t i = 0; i < trajectory->length - 1; ++i)
   {
-    execute_trajectory_segment(arr[i], arr[i + 1], encoder, stepper);
+    execute_trajectory_segment(trajectory->waypoints[i], trajectory->waypoints[i + 1], encoder, stepper);
   }
   stepper.stop(); // Ensure motor stops
 }
+
 void move_to(float target_position, AS5600 &encoder, Stepper &stepper)
 {
   const float Kp = 1.0f;                  // Proportional gain for position error
