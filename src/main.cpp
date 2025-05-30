@@ -156,11 +156,13 @@ void parse_cmd(uint8_t cmd, const uint8_t* payload, size_t payload_len) {
             
             case PING: {
                 com.send_packet(ACK);
+                break;
             }
 
             case HOME: {
                 //Implement homing
                 com.send_packet(ACK);
+                break;
             }
 
             case POS: {
