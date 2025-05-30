@@ -58,7 +58,7 @@ void SerialProtocol::send_packet(uint8_t cmd, const uint8_t* payload, uint16_t p
 }
 
 size_t SerialProtocol::escape_packet(uint8_t* data, size_t len) {
-    uint8_t index = 0;
+    size_t index = 0;
     for (size_t i = 0; i<len; i++) {
         uint8_t b = data[i];
         if (b == START_BYTE || b == ESCAPE_BYTE) {
