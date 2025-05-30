@@ -1,18 +1,23 @@
 #include "SerialProtocol.h"
 
-void crc8(uint8_t& crc, uint8_t byte) {
-        crc ^= byte;
+void SerialParser::update_crc8(uint8_t byte) {
+        crc8_acc ^= byte;
+        for (int i = 0; i < 8; ++i) {
+            crc8_acc = (crc8_acc & 0x80)
+                  ? (crc8_acc << 1) ^ 0x07
+                  : (crc8_acc << 1);
+        }
+    }
+
+uint8_t SerialSender::crc8(const uint8_t* data, size_t length) {
+    uint8_t crc = 0x00;
+    for (size_t i = 0; i < length; ++i) {
+        crc ^= data[i];
         for (int i = 0; i < 8; ++i) {
             crc = (crc & 0x80)
                   ? (crc << 1) ^ 0x07
                   : (crc << 1);
         }
-    }
-
-uint8_t crc8(const uint8_t* data, size_t length) {
-    uint8_t crc = 0x00;
-    for (size_t i = 0; i < length; ++i) {
-        crc8(crc, data[i]);
     }
     return crc;
 }
@@ -73,18 +78,18 @@ void SerialParser::parse(uint8_t byte) {
         switch (state) {
             case ParserState::READ_CMD:
                 cmd = byte;
-                crc8(crc8_acc, byte);
+                update_crc8(byte);
                 state = ParserState::READ_LEN;
                 break;
 
             case ParserState::READ_LEN:
                 if (len_bytes_read == 0) {
                     len = byte;
-                    crc8(crc8_acc, byte);
+                    update_crc8(byte);
                     len_bytes_read = 1;
                 } else {
                     len |= (byte << 8);
-                    crc8(crc8_acc, byte);
+                    update_crc8(byte);
                     len_bytes_read = 0;
 
                     if (len > 0 && len <= PAYLOAD_BUFFER_SIZE) {
@@ -100,7 +105,7 @@ void SerialParser::parse(uint8_t byte) {
 
             
             case ParserState::READ_PAYLOAD:
-                crc8(crc8_acc, byte);
+                update_crc8(byte);
                 if (payload_buffer_len < PAYLOAD_BUFFER_SIZE) payload_buffer[payload_buffer_len++] = byte;
                 if (payload_buffer_len >= len) {
                    state = ParserState::READ_CHECKSUM;

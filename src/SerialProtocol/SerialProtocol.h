@@ -18,9 +18,6 @@ enum class ParserState {
     READ_CHECKSUM
 };
 
-void crc8(uint8_t& crc8, uint8_t byte);
-uint8_t crc8(const uint8_t* data, size_t length);
-
 class SerialParser {
 public:
     using DispatchCallback = void (*)(uint8_t cmd, const uint8_t* payload_buffer, size_t payload_buffer_len);
@@ -44,6 +41,7 @@ private:
     void validate();
     void dispatch();
     void reset();
+    void update_crc8(uint8_t byte);
 
 };
 
@@ -57,6 +55,7 @@ private:
     uint8_t escape_buffer[MAX_PACKET_BUFFER_SIZE*2];
     void escape_packet(uint8_t* data, size_t length);
     void writeUint16LE(uint8_t* buffer, uint16_t value);
+    uint8_t crc8(const uint8_t* data, size_t length);
 };
 
 #endif
