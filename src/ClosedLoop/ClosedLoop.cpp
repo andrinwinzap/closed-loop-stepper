@@ -86,12 +86,12 @@ void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, S
 
   ////////////////////////////////////////////////////////
   
-  Serial.print("Waypoint | Position: ");
-  Serial.print(wp1.position);
-  Serial.print(" | Speed: ");
-  Serial.print(wp1.velocity);
-  Serial.print(" | Timestamp: ");
-  Serial.println(wp1.timestamp);
+  DBG_PRINT("Waypoint | Position: ");
+  DBG_PRINT(wp1.position);
+  DBG_PRINT(" | Speed: ");
+  DBG_PRINT(wp1.velocity);
+  DBG_PRINT(" | Timestamp: ");
+  DBG_PRINTLN(wp1.timestamp);
 
   const int control_interval = 1000/control_loop_frequency;
   const int serial_print_interval = 1000/serial_print_frequency;
@@ -139,7 +139,7 @@ void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, S
         } else {
           if (millis() - stall_start_time > stall_time_threshold) {
             stalled = true;
-            Serial.println("STALLED!");
+            DBG_PRINTLN("STALLED!");
             new_start = {
                       encoder.getPosition(),
                       0.0f,
@@ -156,20 +156,20 @@ void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, S
 
 
       if (debug_output && millis() - last_serial_print_timestamp > serial_print_interval) {
-        Serial.print("Position: ");
-        Serial.print(measured_pos);
-        Serial.print(" | ");
-        Serial.print("Position Error: ");
-        Serial.print(pos_error);
-        Serial.print(" | ");
-        Serial.print("Velocity: ");
-        Serial.print(filtered_vel);
-        Serial.print(" | ");
-        Serial.print("Velocity Error: ");
-        Serial.print(vel_error);
-        Serial.print(" | ");
-        Serial.print("Control Speed: ");
-        Serial.println(control_speed);
+        DBG_PRINT("Position: ");
+        DBG_PRINT(measured_pos);
+        DBG_PRINT(" | ");
+        DBG_PRINT("Position Error: ");
+        DBG_PRINT(pos_error);
+        DBG_PRINT(" | ");
+        DBG_PRINT("Velocity: ");
+        DBG_PRINT(filtered_vel);
+        DBG_PRINT(" | ");
+        DBG_PRINT("Velocity Error: ");
+        DBG_PRINT(vel_error);
+        DBG_PRINT(" | ");
+        DBG_PRINT("Control Speed: ");
+        DBG_PRINTLN(control_speed);
 
         last_serial_print_timestamp = millis();
       }
@@ -183,22 +183,22 @@ void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, S
     }
   }
 
-  Serial.print("Motion Segment Duration: ");
-  Serial.println(millis() - motion_segment_start_time);
+  DBG_PRINT("Motion Segment Duration: ");
+  DBG_PRINTLN(millis() - motion_segment_start_time);
 
   if (stalled) {
-    Serial.println("New motion profile started");
+    DBG_PRINTLN("New motion profile started");
     execute_trajectory_segment(new_start, wp2, encoder, stepper);
   }
 
   wp2.position = encoder.getPosition();
   wp2.velocity = encoder.getSpeed();
-  Serial.print("Updated Waypoint | Position: ");
-  Serial.print(wp2.position);
-  Serial.print(" | Speed: ");
-  Serial.print(wp2.velocity);
-  Serial.print(" | Timestamp: ");
-  Serial.println(wp2.timestamp);
+  DBG_PRINT("Updated Waypoint | Position: ");
+  DBG_PRINT(wp2.position);
+  DBG_PRINT(" | Speed: ");
+  DBG_PRINT(wp2.velocity);
+  DBG_PRINT(" | Timestamp: ");
+  DBG_PRINTLN(wp2.timestamp);
   
 }
 
@@ -233,7 +233,7 @@ void move_to(float target_position, AS5600 &encoder, Stepper &stepper) {
       // If within tolerance, stop and break loop
       if (fabs(pos_error) <= position_tolerance) {
         stepper.setSpeed(0);
-        Serial.println("Position reached within tolerance. Stopping.");
+        DBG_PRINTLN("Position reached within tolerance. Stopping.");
         break;
       }
 
@@ -260,12 +260,12 @@ void move_to(float target_position, AS5600 &encoder, Stepper &stepper) {
       stepper.setSpeed(desired_speed);
 
       // Debug output
-      Serial.print("Pos Error: ");
-      Serial.print(pos_error, 4);
-      Serial.print(" | Speed Cmd: ");
-      Serial.print(desired_speed, 4);
-      Serial.print(" | Accel Applied: ");
-      Serial.println(speed_diff / dt, 4);  // acceleration in units/sec²
+      DBG_PRINT("Pos Error: ");
+      DBG_PRINT(pos_error, 4);
+      DBG_PRINT(" | Speed Cmd: ");
+      DBG_PRINT(desired_speed, 4);
+      DBG_PRINT(" | Accel Applied: ");
+      DBG_PRINTLN(speed_diff / dt, 4);  // acceleration in units/sec²
 
       last_speed_command = desired_speed;
       last_control_time = now;

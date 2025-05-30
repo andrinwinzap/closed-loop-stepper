@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <Serialization/Serialization.h>
+#include <macros.h>
 
 constexpr uint8_t START_BYTE = 0xAA;
 constexpr uint8_t ESCAPE_BYTE = 0xAB;

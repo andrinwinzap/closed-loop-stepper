@@ -121,6 +121,7 @@
 #include <Trajectory/Trajectory.h>
 #include <SerialProtocol/SerialProtocol.h>
 #include <Serialization/Serialization.h>
+#include <macros.h>
 
 SerialProtocol com(Serial);
 
@@ -137,16 +138,16 @@ enum cmdByte : uint8_t {
 };
 
 void printTrajectory(Trajectory& traj) {
-    Serial.println(traj.length);
+    DBG_PRINTLN(traj.length);
                 for (size_t i = 0; i < traj.length; ++i) {
-                    Serial.print("Waypoint ");
-                    Serial.print(i);
-                    Serial.print(": pos=");
-                    Serial.print(traj.waypoints[i].position, 6);
-                    Serial.print(", vel=");
-                    Serial.print(traj.waypoints[i].velocity, 6);
-                    Serial.print(", time=");
-                    Serial.println(traj.waypoints[i].timestamp);
+                    DBG_PRINT("Waypoint ");
+                    DBG_PRINT(i);
+                    DBG_PRINT(": pos=");
+                    DBG_PRINT(traj.waypoints[i].position, 6);
+                    DBG_PRINT(", vel=");
+                    DBG_PRINT(traj.waypoints[i].velocity, 6);
+                    DBG_PRINT(", time=");
+                    DBG_PRINTLN(traj.waypoints[i].timestamp);
                 }
 }
 
@@ -200,15 +201,15 @@ void parse_cmd(uint8_t cmd, const uint8_t* payload, size_t payload_len) {
             }
 
             default: {
-                Serial.print("Command: 0x");
-                Serial.println(cmd, HEX);
-                Serial.print("Payload: ");
+                DBG_PRINT("Command: 0x");
+                DBG_PRINTLN(cmd, HEX);
+                DBG_PRINT("Payload: ");
                 for (int i = 0; i < payload_len; i++) {
-                    Serial.print("0x");
-                    Serial.print(payload[i], HEX);
-                    Serial.print(" ");
+                    DBG_PRINT("0x");
+                    DBG_PRINT(payload[i], HEX);
+                    DBG_PRINT(" ");
                 }
-                Serial.println("");
+                DBG_PRINTLN("");
                 break;
             }
         };

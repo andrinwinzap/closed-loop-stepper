@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <AS5600/AS5600.h>
 #include <Stepper/Stepper.h>
+#include <macros.h>
 
 struct Waypoint {
   float position;             // radians

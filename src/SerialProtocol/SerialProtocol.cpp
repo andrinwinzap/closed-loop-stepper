@@ -114,7 +114,7 @@ void SerialParser::parse(uint8_t byte) {
                 } else if (len == 0) {
                     state = ParserState::READ_CHECKSUM;
                 } else {
-                    Serial.println("Payload too large!");
+                    DBG_PRINTLN("Payload too large!");
                     reset();
                 }
             }
@@ -146,7 +146,7 @@ void SerialParser::validate() {
     if (crc8_acc == checksum) {
         enqueue_command(cmd, payload, payload_len);
     } else {
-        Serial.println("Checksum failed!");
+        DBG_PRINTLN("Checksum failed!");
     }
     crc8_acc = 0x00;
 }
@@ -168,7 +168,7 @@ void SerialParser::enqueue_command(uint8_t cmd, const uint8_t* payload, size_t p
         queue_tail = (queue_tail + 1) % CMD_QUEUE_SIZE;
         queue_count++;
     } else {
-        Serial.println("Command queue full, dropping command");
+        DBG_PRINTLN("Command queue full, dropping command");
     }
 }
 
