@@ -145,6 +145,7 @@ void SerialParser::validate() {
         } else {
             Serial.println("Checksum failed!");
         }
+        crc8_acc = 0x00;
     }
 
 void SerialParser::reset() {
