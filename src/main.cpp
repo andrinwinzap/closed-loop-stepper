@@ -153,6 +153,10 @@ void parse_cmd(uint8_t cmd, const uint8_t* payload, size_t payload_len) {
 
         switch (cmd) {
             
+            case PING: {
+                com.send_packet(ACK);
+            }
+
             case TRAJ: {
                 Trajectory traj(payload, payload_len);
                 if (traj.length>0) {
