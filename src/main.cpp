@@ -157,15 +157,9 @@ void parse_cmd(uint8_t cmd, const uint8_t* payload, size_t payload_len) {
                 com.send_packet(ACK);
             }
 
-            case TRAJ: {
-                Trajectory traj(payload, payload_len);
-                if (traj.length>0) {
-                    Serial.println("Successfully deserialized trajectory.");
-                    printTrajectory(traj);
-                } else {
-                    Serial.println("Failed to deserialize trajectory.");
-                }
-                break;
+            case HOME: {
+                //Implement homing
+                com.send_packet(ACK);
             }
 
             case POS: {
@@ -176,9 +170,15 @@ void parse_cmd(uint8_t cmd, const uint8_t* payload, size_t payload_len) {
                 break;
             }
 
-            case HOME: {
-                //Implement homing
-                com.send_packet(ACK);
+            case TRAJ: {
+                Trajectory traj(payload, payload_len);
+                if (traj.length>0) {
+                    Serial.println("Successfully deserialized trajectory.");
+                    printTrajectory(traj); // Implement trajectory
+                } else {
+                    Serial.println("Failed to deserialize trajectory.");
+                }
+                break;
             }
 
             default: {
