@@ -7,22 +7,22 @@ void SerialProtocol::parse_serial() {
 }
 
 size_t SerialProtocol::available() {
-        parse_serial();
-        return parser.available();
-    };
+    parse_serial();
+    return parser.available();
+}
 
 const Command* SerialProtocol::read() {
-        return parser.read();
-    };
+    return parser.read();
+}
 
 void SerialParser::update_crc8(uint8_t byte) {
-        crc8_acc ^= byte;
-        for (int i = 0; i < 8; ++i) {
-            crc8_acc = (crc8_acc & 0x80)
-                  ? (crc8_acc << 1) ^ 0x07
-                  : (crc8_acc << 1);
-        }
+    crc8_acc ^= byte;
+    for (int i = 0; i < 8; ++i) {
+        crc8_acc = (crc8_acc & 0x80)
+                ? (crc8_acc << 1) ^ 0x07
+                : (crc8_acc << 1);
     }
+}
 
 uint8_t SerialProtocol::crc8(const uint8_t* data, size_t len) {
     uint8_t crc = 0x00;
@@ -75,87 +75,87 @@ size_t SerialProtocol::escape_packet(uint8_t* data, size_t len) {
 
 void SerialParser::parse(uint8_t byte) {
 
-        if (byte == START_BYTE) {
-            reset();
-            state = ParserState::READ_CMD;
+    if (byte == START_BYTE) {
+        reset();
+        state = ParserState::READ_CMD;
+        return;
+    }
+
+    if (state != ParserState::WAIT_START) {
+        if (escape_next) {
+            byte ^= ESCAPE_MASK;
+            escape_next = false;
+        } else if (byte == ESCAPE_BYTE) {
+            escape_next = true;
             return;
         }
-
-        if (state != ParserState::WAIT_START) {
-            if (escape_next) {
-                byte ^= ESCAPE_MASK;
-                escape_next = false;
-            } else if (byte == ESCAPE_BYTE) {
-                escape_next = true;
-                return;
-            }
-        }
-
-        switch (state) {
-            case ParserState::READ_CMD:
-                cmd = byte;
-                update_crc8(byte);
-                state = ParserState::READ_LEN;
-                break;
-
-            case ParserState::READ_LEN:
-                if (len_bytes_read == 0) {
-                    len = byte;
-                    update_crc8(byte);
-                    len_bytes_read = 1;
-                } else {
-                    len |= (byte << 8);
-                    update_crc8(byte);
-                    len_bytes_read = 0;
-
-                    if (len > 0 && len <= MAX_PAYLOAD_SIZE) {
-                        state = ParserState::READ_PAYLOAD;
-                    } else if (len == 0) {
-                        state = ParserState::READ_CHECKSUM;
-                    } else {
-                        Serial.println("Payload too large!");
-                        reset();
-                    }
-                }
-                break;
-
-            
-            case ParserState::READ_PAYLOAD:
-                update_crc8(byte);
-                if (payload_len < MAX_PAYLOAD_SIZE) payload[payload_len++] = byte;
-                if (payload_len >= len) {
-                   state = ParserState::READ_CHECKSUM;
-                }
-                break;
-
-            case ParserState::READ_CHECKSUM:
-                checksum = byte;
-                state = ParserState::WAIT_START;
-                validate();
-                break;
-
-            default:
-                reset();
-        }
     }
+
+    switch (state) {
+        case ParserState::READ_CMD:
+            cmd = byte;
+            update_crc8(byte);
+            state = ParserState::READ_LEN;
+            break;
+
+        case ParserState::READ_LEN:
+            if (len_bytes_read == 0) {
+                len = byte;
+                update_crc8(byte);
+                len_bytes_read = 1;
+            } else {
+                len |= (byte << 8);
+                update_crc8(byte);
+                len_bytes_read = 0;
+
+                if (len > 0 && len <= MAX_PAYLOAD_SIZE) {
+                    state = ParserState::READ_PAYLOAD;
+                } else if (len == 0) {
+                    state = ParserState::READ_CHECKSUM;
+                } else {
+                    Serial.println("Payload too large!");
+                    reset();
+                }
+            }
+            break;
+
+        
+        case ParserState::READ_PAYLOAD:
+            update_crc8(byte);
+            if (payload_len < MAX_PAYLOAD_SIZE) payload[payload_len++] = byte;
+            if (payload_len >= len) {
+                state = ParserState::READ_CHECKSUM;
+            }
+            break;
+
+        case ParserState::READ_CHECKSUM:
+            checksum = byte;
+            state = ParserState::WAIT_START;
+            validate();
+            break;
+
+        default:
+            reset();
+    }
+}
 
 void SerialParser::validate() {
-        if (crc8_acc == checksum) {
-            enqueue_command(cmd, payload, payload_len);
-        } else {
-            Serial.println("Checksum failed!");
-        }
-        crc8_acc = 0x00;
+    if (crc8_acc == checksum) {
+        enqueue_command(cmd, payload, payload_len);
+    } else {
+        Serial.println("Checksum failed!");
     }
+    crc8_acc = 0x00;
+}
 
 void SerialParser::reset() {
-        state = ParserState::WAIT_START;
-        payload_len = 0;
-        len = 0;
-        len_bytes_read = 0;
-        crc8_acc = 0x00;
-        escape_next = false;
-    }
+    state = ParserState::WAIT_START;
+    payload_len = 0;
+    len = 0;
+    len_bytes_read = 0;
+    crc8_acc = 0x00;
+    escape_next = false;
+}
 
 void SerialParser::enqueue_command(uint8_t cmd, const uint8_t* payload, size_t payload_len) {
     if (queue_count < CMD_QUEUE_SIZE) {
