@@ -36,7 +36,7 @@ constexpr float VELOCITY_FILTER_APHA = 0.1f;           // Velocity low pass filt
 constexpr float STALL_VELOCITY_THRESHOLD = 0.1f;       // Stalling velocity threshold
 constexpr float STALL_POSITION_ERROR_THRESHOLD = 0.1f; // Stalling position-error threshold
 constexpr int STALL_TIME_THRESHOLD = 50;               // Minimal duration for stalling detection
-#define CONTROL_LOOP_DEBUG_OUTPUT true
+#define CONTROL_LOOP_DEBUG_OUTPUT false
 
 // Closed Loop Move To
 constexpr float KP_MOVE_TO = 1.0f;
