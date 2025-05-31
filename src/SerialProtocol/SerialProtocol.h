@@ -55,7 +55,6 @@ private:
     size_t queue_count = 0;
 
     void validate();
-    void dispatch();
     void reset();
     void update_crc8(uint8_t byte);
     void enqueue_command(uint8_t cmd, const uint8_t *payload, size_t payload_len);
