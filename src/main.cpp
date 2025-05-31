@@ -19,46 +19,36 @@ TaskHandle_t controlTaskHandle = nullptr;
 
 volatile ControlLoopFlag control_loop_flag = ControlLoopFlag::IDLE;
 
-enum cmdByte : uint8_t
-{
-    PING = 0x01,
-    HOME = 0x02,
-    POS = 0x03,
-    LOAD_TRAJ = 0x04,
-    EXEC_TRAJ = 0x05,
-    FINISHED = 0x06,
-    ACK = 0xEE,
-    NACK = 0xFF
-};
+ControlLoopParams controlParams = {
+    .encoder = &encoder,
+    .stepper = &stepper,
+    .flag = &control_loop_flag,
+    .trajectory = &trajectory};
 
-void control_loop_task(void *param)
+namespace CommandByte
 {
-    for (;;)
+    enum : uint8_t
     {
-        if (control_loop_flag == ControlLoopFlag::EXECUTE_TRAJECTORY && trajectory != nullptr)
-        {
-            DBG_PRINTLN("[CONTROL] Starting trajectory execution...");
-            execute_trajectory(trajectory, encoder, stepper);
-            DBG_PRINTLN("[CONTROL] Finished trajectory execution");
+        PING = 0x01,
+        HOME = 0x02,
+        POS = 0x03,
+        LOAD_TRAJ = 0x04,
+        EXEC_TRAJ = 0x05,
+        FINISHED = 0x06,
+        STATUS = 0x07,
+        ACK = 0xEE,
+        NACK = 0xFF
+    };
+}
 
-            control_loop_flag = ControlLoopFlag::IDLE;
-            com.send_packet(FINISHED);
-        }
-
-        if (control_loop_flag == ControlLoopFlag::HOME)
-        {
-            DBG_PRINTLN("[CONTROL] Starting homing");
-            home(stepper, encoder);
-            DBG_PRINTLN("[CONTROL] Finished homing");
-
-            control_loop_flag = ControlLoopFlag::IDLE;
-            com.send_packet(FINISHED);
-        }
-
-        encoder.update();
-
-        vTaskDelay(pdMS_TO_TICKS(1)); // Run at ~1kHz
-    }
+namespace StatusByte
+{
+    enum : uint8_t
+    {
+        IDLE = 0x01,
+        HOMING = 0x02,
+        EXECUTING_TRAJ = 0x03,
+    };
 }
 
 void printTrajectory(Trajectory &traj)
@@ -79,25 +69,20 @@ void printTrajectory(Trajectory &traj)
 
 void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 {
-    DBG_PRINT("[CMD] Received command 0x");
-    DBG_PRINT(cmd, HEX);
-    DBG_PRINT(" with payload length: ");
-    DBG_PRINTLN(payload_len);
-
     switch (cmd)
     {
-    case PING:
+    case CommandByte::PING:
         DBG_PRINTLN("[CMD] PING");
-        com.send_packet(ACK);
+        com.send_packet(CommandByte::ACK);
         break;
 
-    case HOME:
+    case CommandByte::HOME:
         DBG_PRINTLN("[CMD] HOME");
         control_loop_flag = ControlLoopFlag::HOME;
-        com.send_packet(ACK);
+        com.send_packet(CommandByte::ACK);
         break;
 
-    case POS:
+    case CommandByte::POS:
     {
         DBG_PRINTLN("[CMD] POS");
         float pos = encoder.getPosition();
@@ -105,11 +90,11 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         DBG_PRINTLN(pos);
         uint8_t payload[4];
         writeFloatLE(payload, pos);
-        com.send_packet(POS, payload, 4);
+        com.send_packet(CommandByte::POS, payload, 4);
         break;
     }
 
-    case LOAD_TRAJ:
+    case CommandByte::LOAD_TRAJ:
     {
         DBG_PRINTLN("[CMD] LOAD_TRAJ");
 
@@ -146,11 +131,11 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
             }
         }
 
-        com.send_packet(ACK);
+        com.send_packet(CommandByte::ACK);
         break;
     }
 
-    case EXEC_TRAJ:
+    case CommandByte::EXEC_TRAJ:
     {
         DBG_PRINTLN("[CMD] EXEC_TRAJ");
 
@@ -162,9 +147,38 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 
         control_loop_flag = ControlLoopFlag::EXECUTE_TRAJECTORY;
         DBG_PRINTLN("[CMD] Trajectory execution triggered");
-        com.send_packet(ACK);
+        com.send_packet(CommandByte::ACK);
         break;
     }
+
+    case CommandByte::STATUS:
+
+        switch (control_loop_flag)
+        {
+        case ControlLoopFlag::IDLE:
+        {
+            uint8_t payload[1] = {StatusByte::IDLE};
+            com.send_packet(CommandByte::STATUS, payload, 1);
+            break;
+        }
+        case ControlLoopFlag::HOME:
+        {
+            uint8_t payload[1] = {StatusByte::HOMING};
+            com.send_packet(CommandByte::STATUS, payload, 1);
+            break;
+        }
+
+        case ControlLoopFlag::EXECUTE_TRAJECTORY:
+        {
+            uint8_t payload[1] = {StatusByte::EXECUTING_TRAJ};
+            com.send_packet(CommandByte::STATUS, payload, 1);
+            break;
+        }
+
+        default:
+            break;
+        }
+        break;
 
     default:
         DBG_PRINT("[CMD] Unknown command: 0x");
@@ -216,7 +230,7 @@ void setup()
         control_loop_task,
         "ControlLoopTask",
         4096,
-        NULL,
+        &controlParams,
         1,
         &controlTaskHandle,
         0 // Core 0
@@ -230,7 +244,6 @@ void loop()
         const Command *cmd = com.read();
         if (cmd)
         {
-            DBG_PRINTLN("[LOOP] Command available, parsing...");
             parse_cmd(cmd->cmd, cmd->payload, cmd->payload_len);
         }
     }

@@ -14,6 +14,14 @@ enum class ControlLoopFlag
     EXECUTE_TRAJECTORY
 };
 
+struct ControlLoopParams
+{
+    AS5600 *encoder;
+    Stepper *stepper;
+    volatile ControlLoopFlag *flag;
+    Trajectory **trajectory;
+};
+
 float hermiteInterpolate(const Waypoint &wp1,
                          const Waypoint &wp2,
                          unsigned long elapsed);
@@ -21,6 +29,8 @@ float hermiteInterpolate(const Waypoint &wp1,
 float hermiteVelocity(const Waypoint &wp1,
                       const Waypoint &wp2,
                       unsigned long elapsed);
+
+void control_loop_task(void *param);
 
 void home(Stepper &stepper, AS5600 &encoder);
 

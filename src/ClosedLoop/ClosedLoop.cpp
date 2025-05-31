@@ -51,6 +51,39 @@ float hermiteVelocity(const Waypoint &wp1, const Waypoint &wp2, unsigned long el
   return dPu / dt_s;
 }
 
+void control_loop_task(void *param)
+{
+  ControlLoopParams *params = static_cast<ControlLoopParams *>(param);
+  AS5600 &encoder = *params->encoder;
+  Stepper &stepper = *params->stepper;
+  volatile ControlLoopFlag &flag = *params->flag;
+  Trajectory **trajectory = params->trajectory;
+
+  for (;;)
+  {
+    if (flag == ControlLoopFlag::EXECUTE_TRAJECTORY && *trajectory != nullptr)
+    {
+      DBG_PRINTLN("[CONTROL] Starting trajectory execution...");
+      execute_trajectory(*trajectory, encoder, stepper);
+      DBG_PRINTLN("[CONTROL] Finished trajectory execution");
+
+      flag = ControlLoopFlag::IDLE;
+    }
+
+    if (flag == ControlLoopFlag::HOME)
+    {
+      DBG_PRINTLN("[CONTROL] Starting homing");
+      home(stepper, encoder);
+      DBG_PRINTLN("[CONTROL] Finished homing");
+
+      flag = ControlLoopFlag::IDLE;
+    }
+
+    encoder.update();
+    vTaskDelay(pdMS_TO_TICKS(1)); // Run at ~1kHz
+  }
+}
+
 void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, Stepper &stepper)
 {
   DBG_PRINT("[INFO] Start Waypoint | Pos: ");
