@@ -22,13 +22,13 @@ struct ControlLoopParams
     Trajectory **trajectory;
 };
 
-float hermiteInterpolate(const Waypoint &wp1,
-                         const Waypoint &wp2,
-                         unsigned long elapsed);
+float hermite_interpolate(const Waypoint &wp1,
+                          const Waypoint &wp2,
+                          unsigned long elapsed);
 
-float hermiteVelocity(const Waypoint &wp1,
-                      const Waypoint &wp2,
-                      unsigned long elapsed);
+float hermite_velocity(const Waypoint &wp1,
+                       const Waypoint &wp2,
+                       unsigned long elapsed);
 
 void control_loop_task(void *param);
 

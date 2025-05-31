@@ -1,7 +1,7 @@
 #include "ClosedLoop.h"
 
 // Hermite interpolation taking elapsed time (ms) directly
-float hermiteInterpolate(const Waypoint &wp1, const Waypoint &wp2, unsigned long elapsed)
+float hermite_interpolate(const Waypoint &wp1, const Waypoint &wp2, unsigned long elapsed)
 {
   float dt_ms = float(wp2.timestamp - wp1.timestamp);
   if (dt_ms <= 0)
@@ -25,7 +25,7 @@ float hermiteInterpolate(const Waypoint &wp1, const Waypoint &wp2, unsigned long
   return h00 * wp1.position + h10 * m0 + h01 * wp2.position + h11 * m1;
 }
 
-float hermiteVelocity(const Waypoint &wp1, const Waypoint &wp2, unsigned long elapsed)
+float hermite_velocity(const Waypoint &wp1, const Waypoint &wp2, unsigned long elapsed)
 {
   float dt_ms = float(wp2.timestamp - wp1.timestamp);
   if (dt_ms <= 0)
@@ -122,8 +122,8 @@ void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, S
 
     if (now - last_control_loop_timestamp >= CONTROL_LOOP_INTERVAL)
     {
-      float desired_pos = hermiteInterpolate(wp1, wp2, elapsed);
-      float desired_vel = hermiteVelocity(wp1, wp2, elapsed);
+      float desired_pos = hermite_interpolate(wp1, wp2, elapsed);
+      float desired_vel = hermite_velocity(wp1, wp2, elapsed);
 
       float measured_pos = encoder.getPosition();
       float measured_vel = encoder.getSpeed();
