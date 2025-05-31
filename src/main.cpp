@@ -270,4 +270,5 @@ void loop()
             parse_cmd(cmd->cmd, cmd->payload, cmd->payload_len);
         }
     }
+    encoder.update();
 }
