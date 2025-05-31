@@ -127,7 +127,8 @@ void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, S
 
       float control_speed = KF * desired_vel + KP * pos_error + KV * vel_error;
 
-      if (CONTROL_LOOP_DEBUG_OUTPUT && millis() - last_serial_print_timestamp > CONTROL_LOOP_DEBUG_INTERVAL)
+#if CONTROL_LOOP_DEBUG_OUTPUT
+      if (millis() - last_serial_print_timestamp > CONTROL_LOOP_DEBUG_INTERVAL)
       {
         DBG_PRINT("[DEBUG] t=");
         DBG_PRINT(elapsed);
@@ -148,6 +149,7 @@ void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, S
 
         last_serial_print_timestamp = millis();
       }
+#endif
 
       if (control_speed != last_control_speed)
       {
@@ -197,7 +199,9 @@ void move_to(float target_position, AS5600 &encoder, Stepper &stepper)
 {
   stepper.start();
 
-  unsigned long last_control_time = millis();
+  unsigned long now = millis();
+  unsigned long last_control_time = now;
+  unsigned long last_serial_print_timestamp = now;
   float last_speed_command = 0.0f;
 
   while (true)
@@ -234,14 +238,21 @@ void move_to(float target_position, AS5600 &encoder, Stepper &stepper)
 
       stepper.setSpeed(desired_speed);
 
-      DBG_PRINT("[MOVE] t=");
-      DBG_PRINT(now - last_control_time);
-      DBG_PRINT("ms\tPosErr=");
-      DBG_PRINT(pos_error, 4);
-      DBG_PRINT("\tSpeedCmd=");
-      DBG_PRINT(desired_speed, 4);
-      DBG_PRINT("\tAccel=");
-      DBG_PRINTLN(speed_diff / dt, 4);
+#if CONTROL_LOOP_DEBUG_OUTPUT
+      if (millis() - last_serial_print_timestamp > CONTROL_LOOP_DEBUG_INTERVAL)
+      {
+        DBG_PRINT("[MOVE] t=");
+        DBG_PRINT(now - last_control_time);
+        DBG_PRINT("ms\tPosErr=");
+        DBG_PRINT(pos_error, 4);
+        DBG_PRINT("\tSpeedCmd=");
+        DBG_PRINT(desired_speed, 4);
+        DBG_PRINT("\tAccel=");
+        DBG_PRINTLN(speed_diff / dt, 4);
+
+        last_serial_print_timestamp = millis();
+      }
+#endif
 
       last_speed_command = desired_speed;
       last_control_time = now;

@@ -49,8 +49,10 @@ void home()
         int raw = analogRead(HALL_EFFECT_SENSOR_PIN);
         filteredHallSensorValue = HALL_EFFECT_SENSOR_ALPHA * raw + (1 - HALL_EFFECT_SENSOR_ALPHA) * filteredHallSensorValue;
 
+#if PRINT_HALL_SENSOR_VALUE
         DBG_PRINT("[HOME] Hall sensor value: ");
         DBG_PRINTLN(filteredHallSensorValue);
+#endif
 
         if (filteredHallSensorValue < 1)
         {
@@ -94,7 +96,6 @@ void home()
     {
         unsigned long start = micros();
         encoder.update();
-        DBG_PRINTLN(micros() - start);
     }
 
     move_to(0, encoder, stepper);

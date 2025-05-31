@@ -10,6 +10,7 @@
 constexpr float HALL_EFFECT_SENSOR_UPDATE_FREQUENCY = 1000;
 constexpr float HALL_EFFECT_SENSOR_ALPHA = 0.2;
 constexpr float HALL_EFFECT_SENSOR_UPDATE_PERIOD = 1e6 / HALL_EFFECT_SENSOR_UPDATE_FREQUENCY;
+#define PRINT_HALL_SENSOR_VALUE false
 
 // Encoder
 constexpr float ENCODER_UPDATE_FREQUENCY = 10000.0f;
@@ -35,7 +36,7 @@ constexpr float VELOCITY_FILTER_APHA = 0.1f;           // Velocity low pass filt
 constexpr float STALL_VELOCITY_THRESHOLD = 0.1f;       // Stalling velocity threshold
 constexpr float STALL_POSITION_ERROR_THRESHOLD = 0.1f; // Stalling position-error threshold
 constexpr int STALL_TIME_THRESHOLD = 50;               // Minimal duration for stalling detection
-constexpr bool CONTROL_LOOP_DEBUG_OUTPUT = false;
+#define CONTROL_LOOP_DEBUG_OUTPUT true
 
 // Closed Loop Move To
 constexpr float KP_MOVE_TO = 1.0f;
