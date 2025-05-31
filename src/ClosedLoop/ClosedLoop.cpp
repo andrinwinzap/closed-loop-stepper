@@ -94,7 +94,7 @@ void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, S
 
       float measured_pos = encoder.getPosition();
       float measured_vel = encoder.getSpeed();
-      filtered_vel = CONTROL_LOOP_DEBUG_INTERVAL * measured_vel + (1 - CONTROL_LOOP_DEBUG_INTERVAL) * filtered_vel;
+      filtered_vel = VELOCITY_FILTER_APHA * measured_vel + (1 - VELOCITY_FILTER_APHA) * filtered_vel;
 
       float pos_error = desired_pos - measured_pos;
       float vel_error = desired_vel - filtered_vel;
