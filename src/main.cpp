@@ -51,22 +51,6 @@ namespace StatusByte
     };
 }
 
-void printTrajectory(Trajectory &traj)
-{
-    DBG_PRINTLN(traj.length);
-    for (size_t i = 0; i < traj.length; ++i)
-    {
-        DBG_PRINT("Waypoint ");
-        DBG_PRINT(i);
-        DBG_PRINT(": pos=");
-        DBG_PRINT(traj.waypoints[i].position, 6);
-        DBG_PRINT(", vel=");
-        DBG_PRINT(traj.waypoints[i].velocity, 6);
-        DBG_PRINT(", time=");
-        DBG_PRINTLN(traj.waypoints[i].timestamp);
-    }
-}
-
 void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 {
     switch (cmd)
