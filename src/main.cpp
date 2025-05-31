@@ -8,23 +8,21 @@
 #include <Macros.h>
 #include <ProtocolByteDefinitions.h>
 
-AS5600 encoder(GEAR_RATIO);
-Stepper stepper(STEPPER_STEP_PIN, STEPPER_DIR_PIN, STEPPER_EN_PIN, GEAR_RATIO);
-
 HardwareSerial com_serial(2);
 SerialProtocol com(com_serial);
 
-Trajectory *trajectory = nullptr;
-
-TaskHandle_t controlTaskHandle = nullptr;
-
+AS5600 encoder(GEAR_RATIO);
+Stepper stepper(STEPPER_STEP_PIN, STEPPER_DIR_PIN, STEPPER_EN_PIN, GEAR_RATIO);
 volatile ControlLoopFlag control_loop_flag;
+Trajectory *trajectory = nullptr;
 
 ControlLoopParams control_loop_params = {
     .encoder = &encoder,
     .stepper = &stepper,
     .flag = &control_loop_flag,
     .trajectory = &trajectory};
+
+TaskHandle_t controlTaskHandle = nullptr;
 
 void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 {
