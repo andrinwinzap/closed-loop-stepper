@@ -10,7 +10,8 @@
 AS5600 encoder(GEAR_RATIO);
 Stepper stepper(STEPPER_STEP_PIN, STEPPER_DIR_PIN, STEPPER_EN_PIN, GEAR_RATIO);
 
-SerialProtocol com(Serial);
+HardwareSerial com_serial(2);
+SerialProtocol com(com_serial);
 
 Trajectory *trajectory = nullptr;
 
@@ -46,6 +47,9 @@ void home()
         stepper.updateAcceleration();
         int raw = analogRead(HALL_EFFECT_SENSOR_PIN);
         filteredHallSensorValue = HALL_EFFECT_SENSOR_ALPHA * raw + (1 - HALL_EFFECT_SENSOR_ALPHA) * filteredHallSensorValue;
+
+        DBG_PRINT("Hall sensor: ");
+        DBG_PRINTLN(filteredHallSensorValue);
 
         if (filteredHallSensorValue < 1)
             break;
@@ -178,6 +182,7 @@ void setup()
 {
 
     Serial.begin(115200);
+    com_serial.begin(115200, SERIAL_8N1, RXD2, TXD2);
 
     Wire.begin();
 

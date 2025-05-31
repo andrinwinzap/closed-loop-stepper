@@ -40,3 +40,7 @@ constexpr bool CONTROL_LOOP_DEBUG_OUTPUT = false;
 // Closed Loop Move To
 constexpr float KP_MOVE_TO = 1.0f;
 constexpr float POSITION_TOLERANCE = 0.01f;
+
+// Serial Communication Protocol
+#define RXD2 26
+#define TXD2 27
