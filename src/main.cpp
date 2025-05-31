@@ -17,7 +17,7 @@ Trajectory *trajectory = nullptr;
 
 TaskHandle_t controlTaskHandle = nullptr;
 
-volatile bool startTrajectory = false;
+volatile ControlLoopFlag control_loop_flag = ControlLoopFlag::IDLE;
 
 enum cmdByte : uint8_t
 {
@@ -35,13 +35,23 @@ void control_loop_task(void *param)
 {
     for (;;)
     {
-        if (startTrajectory && trajectory != nullptr)
+        if (control_loop_flag == ControlLoopFlag::EXECUTE_TRAJECTORY && trajectory != nullptr)
         {
             DBG_PRINTLN("[CONTROL] Starting trajectory execution...");
             execute_trajectory(trajectory, encoder, stepper);
             DBG_PRINTLN("[CONTROL] Finished trajectory execution");
 
-            startTrajectory = false;
+            control_loop_flag = ControlLoopFlag::IDLE;
+            com.send_packet(FINISHED);
+        }
+
+        if (control_loop_flag == ControlLoopFlag::HOME)
+        {
+            DBG_PRINTLN("[CONTROL] Starting homing");
+            home(stepper, encoder);
+            DBG_PRINTLN("[CONTROL] Finished homing");
+
+            control_loop_flag = ControlLoopFlag::IDLE;
             com.send_packet(FINISHED);
         }
 
@@ -49,86 +59,6 @@ void control_loop_task(void *param)
 
         vTaskDelay(pdMS_TO_TICKS(1)); // Run at ~1kHz
     }
-}
-
-void home()
-{
-    DBG_PRINTLN("[HOME] Starting homing process...");
-
-    stepper.setSpeed(-HOMING_SPEED);
-    stepper.move(-PI / 8.0, HOMING_SPEED, HOMING_ACCELERATION);
-    DBG_PRINTLN("[HOME] Stepper move initiated");
-
-    float first_bound = 0;
-
-    stepper.start();
-    stepper.accelerate(0, HOMING_SPEED, HOMING_ACCELERATION);
-    DBG_PRINTLN("[HOME] Stepper acceleration started");
-
-    float filteredHallSensorValue = analogRead(HALL_EFFECT_SENSOR_PIN);
-
-    while (true)
-    {
-        stepper.updateAcceleration();
-        int raw = analogRead(HALL_EFFECT_SENSOR_PIN);
-        filteredHallSensorValue = HALL_EFFECT_SENSOR_ALPHA * raw + (1 - HALL_EFFECT_SENSOR_ALPHA) * filteredHallSensorValue;
-
-#if PRINT_HALL_SENSOR_VALUE
-        DBG_PRINT("[HOME] Hall sensor value: ");
-        DBG_PRINTLN(filteredHallSensorValue);
-#endif
-
-        if (filteredHallSensorValue < 1)
-        {
-            DBG_PRINTLN("[HOME] Detected falling edge - Hall sensor triggered (first bound)");
-            break;
-        }
-
-        delayMicroseconds(HALL_EFFECT_SENSOR_UPDATE_PERIOD);
-    }
-
-    first_bound = encoder.getPosition();
-    DBG_PRINT("[HOME] First bound position: ");
-    DBG_PRINTLN(first_bound);
-
-    while (true)
-    {
-        int raw = analogRead(HALL_EFFECT_SENSOR_PIN);
-        filteredHallSensorValue = HALL_EFFECT_SENSOR_ALPHA * raw + (1 - HALL_EFFECT_SENSOR_ALPHA) * filteredHallSensorValue;
-
-        if (filteredHallSensorValue > 1)
-        {
-            DBG_PRINTLN("[HOME] Detected rising edge - leaving Hall sensor");
-            break;
-        }
-
-        delayMicroseconds(HALL_EFFECT_SENSOR_UPDATE_PERIOD);
-    }
-
-    float current_pos = encoder.getPosition();
-    float home = (current_pos - first_bound) / 2;
-
-    DBG_PRINT("[HOME] Current position: ");
-    DBG_PRINTLN(current_pos);
-    DBG_PRINT("[HOME] Calculated home offset: ");
-    DBG_PRINTLN(home);
-
-    encoder.setPosition(current_pos - home);
-
-    stepper.accelerate(HOMING_SPEED, 0, HOMING_ACCELERATION);
-    while (stepper.updateAcceleration())
-    {
-        unsigned long start = micros();
-        encoder.update();
-    }
-
-    move_to(0, encoder, stepper);
-
-    DBG_PRINTLN("[HOME] Finished homing");
-    DBG_PRINT("[HOME] Encoder position after homing: ");
-    DBG_PRINTLN(encoder.getPosition());
-
-    delay(1000);
 }
 
 void printTrajectory(Trajectory &traj)
@@ -163,9 +93,8 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 
     case HOME:
         DBG_PRINTLN("[CMD] HOME");
+        control_loop_flag = ControlLoopFlag::HOME;
         com.send_packet(ACK);
-        home();
-        com.send_packet(FINISHED);
         break;
 
     case POS:
@@ -231,7 +160,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
             break;
         }
 
-        startTrajectory = true;
+        control_loop_flag = ControlLoopFlag::EXECUTE_TRAJECTORY;
         DBG_PRINTLN("[CMD] Trajectory execution triggered");
         com.send_packet(ACK);
         break;

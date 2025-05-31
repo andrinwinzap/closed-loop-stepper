@@ -7,6 +7,13 @@
 #include <Trajectory/Trajectory.h>
 #include <Macros.h>
 
+enum class ControlLoopFlag
+{
+    IDLE,
+    HOME,
+    EXECUTE_TRAJECTORY
+};
+
 float hermiteInterpolate(const Waypoint &wp1,
                          const Waypoint &wp2,
                          unsigned long elapsed);
@@ -14,6 +21,8 @@ float hermiteInterpolate(const Waypoint &wp1,
 float hermiteVelocity(const Waypoint &wp1,
                       const Waypoint &wp2,
                       unsigned long elapsed);
+
+void home(Stepper &stepper, AS5600 &encoder);
 
 void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, Stepper &stepper);
 
