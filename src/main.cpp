@@ -15,6 +15,10 @@ SerialProtocol com(com_serial);
 
 Trajectory *trajectory = nullptr;
 
+TaskHandle_t controlTaskHandle = nullptr;
+
+volatile bool startTrajectory = false;
+
 enum cmdByte : uint8_t
 {
     PING = 0x01,
@@ -26,6 +30,26 @@ enum cmdByte : uint8_t
     ACK = 0xEE,
     NACK = 0xFF
 };
+
+void control_loop_task(void *param)
+{
+    for (;;)
+    {
+        if (startTrajectory && trajectory != nullptr)
+        {
+            DBG_PRINTLN("[CONTROL] Starting trajectory execution...");
+            execute_trajectory(trajectory, encoder, stepper);
+            DBG_PRINTLN("[CONTROL] Finished trajectory execution");
+
+            startTrajectory = false;
+            com.send_packet(FINISHED);
+        }
+
+        encoder.update();
+
+        vTaskDelay(pdMS_TO_TICKS(1)); // Run at ~1kHz
+    }
+}
 
 void home()
 {
@@ -207,9 +231,9 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
             break;
         }
 
-        DBG_PRINTLN("[CMD] Executing trajectory...");
-        execute_trajectory(trajectory, encoder, stepper);
-        DBG_PRINTLN("[CMD] Trajectory execution complete");
+        startTrajectory = true;
+        DBG_PRINTLN("[CMD] Trajectory execution triggered");
+        com.send_packet(ACK);
         break;
     }
 
@@ -257,6 +281,17 @@ void setup()
 
     pinMode(HALL_EFFECT_SENSOR_PIN, INPUT_PULLUP);
     DBG_PRINTLN("[SETUP] Hall effect sensor pin configured");
+
+    // Start control loop on Core 0
+    xTaskCreatePinnedToCore(
+        control_loop_task,
+        "ControlLoopTask",
+        4096,
+        NULL,
+        1,
+        &controlTaskHandle,
+        0 // Core 0
+    );
 }
 
 void loop()
@@ -270,5 +305,4 @@ void loop()
             parse_cmd(cmd->cmd, cmd->payload, cmd->payload_len);
         }
     }
-    encoder.update();
 }
