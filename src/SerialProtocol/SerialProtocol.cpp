@@ -70,6 +70,12 @@ void SerialProtocol::send_packet(uint8_t cmd, const uint8_t *payload, uint16_t p
     serial_port.write(escaped_packet, escaped_packet_len);
 }
 
+void SerialProtocol::send_packet(uint8_t cmd, const uint8_t payload_byte)
+{
+    uint8_t payload[1] = {payload_byte};
+    send_packet(cmd, payload, 1);
+}
+
 size_t SerialProtocol::escape_packet(const uint8_t *data, size_t len, uint8_t *escaped_packet) const
 {
     size_t index = 0;

@@ -29,16 +29,18 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
     switch (cmd)
     {
     case CommandByte::PING:
+    {
         DBG_PRINTLN("[CMD] PING");
         com.send_packet(CommandByte::ACK);
         break;
-
+    }
     case CommandByte::HOME:
+    {
         DBG_PRINTLN("[CMD] HOME");
         control_loop_flag = ControlLoop::Flag::HOME;
         com.send_packet(CommandByte::ACK);
         break;
-
+    }
     case CommandByte::POS:
     {
         DBG_PRINTLN("[CMD] POS");
@@ -50,7 +52,6 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         com.send_packet(CommandByte::POS, payload, 4);
         break;
     }
-
     case CommandByte::LOAD_TRAJ:
     {
         DBG_PRINTLN("[CMD] LOAD_TRAJ");
@@ -91,7 +92,6 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         com.send_packet(CommandByte::ACK);
         break;
     }
-
     case CommandByte::EXEC_TRAJ:
     {
         DBG_PRINTLN("[CMD] EXEC_TRAJ");
@@ -107,36 +107,31 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         com.send_packet(CommandByte::ACK);
         break;
     }
-
     case CommandByte::STATUS:
+    {
 
         switch (ControlLoop::state)
         {
         case ControlLoop::State::IDLE:
         {
-            uint8_t payload[1] = {StatusByte::IDLE};
-            com.send_packet(CommandByte::STATUS, payload, 1);
+            com.send_packet(CommandByte::STATUS, StatusByte::IDLE);
             break;
         }
         case ControlLoop::State::HOMING:
         {
-            uint8_t payload[1] = {StatusByte::HOMING};
-            com.send_packet(CommandByte::STATUS, payload, 1);
+            com.send_packet(CommandByte::STATUS, StatusByte::HOMING);
             break;
         }
-
         case ControlLoop::State::EXECUTING_TRAJECTORY:
         {
-            uint8_t payload[1] = {StatusByte::EXECUTING_TRAJECTORY};
-            com.send_packet(CommandByte::STATUS, payload, 1);
+            com.send_packet(CommandByte::STATUS, StatusByte::EXECUTING_TRAJECTORY);
             break;
         }
-
         default:
             break;
         }
         break;
-
+    }
     default:
         DBG_PRINT("[CMD] Unknown command: 0x");
         DBG_PRINTLN(cmd, HEX);
