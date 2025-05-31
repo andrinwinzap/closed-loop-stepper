@@ -13,10 +13,10 @@ SerialProtocol com(com_serial);
 
 AS5600 encoder(GEAR_RATIO);
 Stepper stepper(STEPPER_STEP_PIN, STEPPER_DIR_PIN, STEPPER_EN_PIN, GEAR_RATIO);
-volatile ControlLoopFlag control_loop_flag;
+volatile ControlLoop::Flag control_loop_flag;
 Trajectory *trajectory = nullptr;
 
-ControlLoopParams control_loop_params = {
+ControlLoop::Params control_loop_params = {
     .encoder = &encoder,
     .stepper = &stepper,
     .flag = &control_loop_flag,
@@ -35,7 +35,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 
     case CommandByte::HOME:
         DBG_PRINTLN("[CMD] HOME");
-        control_loop_flag = ControlLoopFlag::HOME;
+        control_loop_flag = ControlLoop::Flag::HOME;
         com.send_packet(CommandByte::ACK);
         break;
 
@@ -102,7 +102,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
             break;
         }
 
-        control_loop_flag = ControlLoopFlag::EXECUTE_TRAJECTORY;
+        control_loop_flag = ControlLoop::Flag::EXECUTE_TRAJECTORY;
         DBG_PRINTLN("[CMD] Trajectory execution triggered");
         com.send_packet(CommandByte::ACK);
         break;
@@ -112,20 +112,20 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 
         switch (control_loop_flag)
         {
-        case ControlLoopFlag::IDLE:
+        case ControlLoop::Flag::IDLE:
         {
             uint8_t payload[1] = {StatusByte::IDLE};
             com.send_packet(CommandByte::STATUS, payload, 1);
             break;
         }
-        case ControlLoopFlag::HOME:
+        case ControlLoop::Flag::HOME:
         {
             uint8_t payload[1] = {StatusByte::HOMING};
             com.send_packet(CommandByte::STATUS, payload, 1);
             break;
         }
 
-        case ControlLoopFlag::EXECUTE_TRAJECTORY:
+        case ControlLoop::Flag::EXECUTE_TRAJECTORY:
         {
             uint8_t payload[1] = {StatusByte::EXECUTING_TRAJ};
             com.send_packet(CommandByte::STATUS, payload, 1);
@@ -181,10 +181,10 @@ void setup()
 
     pinMode(HALL_EFFECT_SENSOR_PIN, INPUT_PULLUP);
 
-    control_loop_flag = ControlLoopFlag::IDLE;
+    control_loop_flag = ControlLoop::Flag::IDLE;
 
     xTaskCreatePinnedToCore(
-        control_loop_task,
+        ControlLoop::control_loop_task,
         "ControlLoopTask",
         4096,
         &control_loop_params,

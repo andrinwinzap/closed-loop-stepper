@@ -7,37 +7,40 @@
 #include <Trajectory/Trajectory.h>
 #include <Macros.h>
 
-enum class ControlLoopFlag
+namespace ControlLoop
 {
-    IDLE,
-    HOME,
-    EXECUTE_TRAJECTORY
-};
+    enum class Flag
+    {
+        IDLE,
+        HOME,
+        EXECUTE_TRAJECTORY
+    };
 
-struct ControlLoopParams
-{
-    AS5600 *encoder;
-    Stepper *stepper;
-    volatile ControlLoopFlag *flag;
-    Trajectory **trajectory;
-};
+    struct Params
+    {
+        AS5600 *encoder;
+        Stepper *stepper;
+        volatile Flag *flag;
+        Trajectory **trajectory;
+    };
 
-float hermite_interpolate(const Waypoint &wp1,
-                          const Waypoint &wp2,
-                          unsigned long elapsed);
+    float hermite_interpolate(const Waypoint &wp1,
+                              const Waypoint &wp2,
+                              unsigned long elapsed);
 
-float hermite_velocity(const Waypoint &wp1,
-                       const Waypoint &wp2,
-                       unsigned long elapsed);
+    float hermite_velocity(const Waypoint &wp1,
+                           const Waypoint &wp2,
+                           unsigned long elapsed);
 
-void control_loop_task(void *param);
+    void control_loop_task(void *param);
 
-void home(Stepper &stepper, AS5600 &encoder);
+    void home(Stepper &stepper, AS5600 &encoder);
 
-void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, Stepper &stepper);
+    void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, Stepper &stepper);
 
-void execute_trajectory(Trajectory *trajectory, AS5600 &encoder, Stepper &stepper);
+    void execute_trajectory(Trajectory *trajectory, AS5600 &encoder, Stepper &stepper);
 
-void move_to(float position, AS5600 &encoder, Stepper &stepper);
+    void move_to(float position, AS5600 &encoder, Stepper &stepper);
+}
 
 #endif
