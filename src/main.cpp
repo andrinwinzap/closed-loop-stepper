@@ -180,11 +180,9 @@ void setup()
     DBG_PRINTLN("[SETUP] Stepper initialized");
 
     pinMode(HALL_EFFECT_SENSOR_PIN, INPUT_PULLUP);
-    DBG_PRINTLN("[SETUP] Hall effect sensor pin configured");
 
     control_loop_flag = ControlLoopFlag::IDLE;
 
-    // Start control loop on Core 0
     xTaskCreatePinnedToCore(
         control_loop_task,
         "ControlLoopTask",
@@ -194,6 +192,8 @@ void setup()
         &controlTaskHandle,
         0 // Core 0
     );
+
+    DBG_PRINTLN("[SETUP] Setup complete");
 }
 
 void loop()

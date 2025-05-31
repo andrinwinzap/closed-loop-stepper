@@ -148,7 +148,7 @@ void SerialParser::parse(uint8_t byte)
             }
             else
             {
-                DBG_PRINTLN("Payload too large!");
+                DBG_PRINTLN("[COM] Payload too large!");
                 reset();
             }
         }
@@ -185,7 +185,7 @@ void SerialParser::validate()
     }
     else
     {
-        DBG_PRINTLN("Checksum failed!");
+        DBG_PRINTLN("[COM] Checksum failed!");
     }
     crc8_acc = 0x00;
 }
@@ -212,7 +212,7 @@ void SerialParser::enqueue_command(uint8_t cmd, const uint8_t *payload, size_t p
     }
     else
     {
-        DBG_PRINTLN("Command queue full, dropping command");
+        DBG_PRINTLN("[COM] Command queue full, dropping command");
     }
 }
 

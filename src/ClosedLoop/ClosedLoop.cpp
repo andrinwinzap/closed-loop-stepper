@@ -72,7 +72,7 @@ void control_loop_task(void *param)
 
     if (flag == ControlLoopFlag::HOME)
     {
-      DBG_PRINTLN("[CONTROL] Starting homing");
+      DBG_PRINTLN("[CONTROL] Starting homing...");
       home(stepper, encoder);
       DBG_PRINTLN("[CONTROL] Finished homing");
 
@@ -86,7 +86,7 @@ void control_loop_task(void *param)
 
 void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, Stepper &stepper)
 {
-  DBG_PRINT("[INFO] Start Waypoint | Pos: ");
+  DBG_PRINT("[CONTROL][TRAJ] Start Waypoint | Pos: ");
   DBG_PRINT(wp1.position, 4);
   DBG_PRINT(" | Vel: ");
   DBG_PRINT(wp1.velocity, 4);
@@ -141,7 +141,7 @@ void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, S
         else if (millis() - stall_start_time > STALL_TIME_THRESHOLD)
         {
           stalled = true;
-          DBG_PRINT("[STALL] PosErr=");
+          DBG_PRINT("[CONTROL][TRAJ][STALL] PosErr=");
           DBG_PRINT(pos_error, 4);
           DBG_PRINT("\tFilteredVel=");
           DBG_PRINTLN(filtered_vel, 4);
@@ -163,7 +163,7 @@ void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, S
 #if CONTROL_LOOP_DEBUG_OUTPUT
       if (millis() - last_serial_print_timestamp > CONTROL_LOOP_DEBUG_INTERVAL)
       {
-        DBG_PRINT("[DEBUG] t=");
+        DBG_PRINT("[CONTROL] t=");
         DBG_PRINT(elapsed);
         DBG_PRINT("ms\tPos=");
         DBG_PRINT(measured_pos, 4);
@@ -194,18 +194,18 @@ void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, S
     }
   }
 
-  DBG_PRINT("[INFO] Segment Duration: ");
+  DBG_PRINT("[CONTROL][TRAJ] Segment Duration: ");
   DBG_PRINTLN(millis() - motion_segment_start_time);
 
   if (stalled)
   {
-    DBG_PRINTLN("[WARN] Stalled. Restarting segment from current position.");
+    DBG_PRINTLN("[CONTROL][TRAJ] Stalled. Restarting segment from current position.");
     execute_trajectory_segment(new_start, wp2, encoder, stepper);
   }
 
   wp2.position = encoder.getPosition();
   wp2.velocity = encoder.getSpeed();
-  DBG_PRINT("[INFO] Updated Waypoint | Pos: ");
+  DBG_PRINT("[CONTROL][TRAJ] Updated End Waypoint | Pos: ");
   DBG_PRINT(wp2.position, 4);
   DBG_PRINT(" | Vel: ");
   DBG_PRINT(wp2.velocity, 4);
@@ -220,7 +220,7 @@ void execute_trajectory(Trajectory *trajectory, AS5600 &encoder, Stepper &steppe
 
   for (size_t i = 0; i < trajectory->length - 1; ++i)
   {
-    DBG_PRINT("[INFO] Executing Segment ");
+    DBG_PRINT("[CONTROL][TRAJ] Executing Segment ");
     DBG_PRINTLN(i);
     execute_trajectory_segment(trajectory->waypoints[i], trajectory->waypoints[i + 1], encoder, stepper);
   }
@@ -250,7 +250,7 @@ void move_to(float target_position, AS5600 &encoder, Stepper &stepper)
       if (fabs(pos_error) <= POSITION_TOLERANCE)
       {
         stepper.setSpeed(0);
-        DBG_PRINTLN("[INFO] Target reached within tolerance.");
+        DBG_PRINTLN("[CONTROL][MOVETO] Target reached within tolerance.");
         break;
       }
 
@@ -274,7 +274,7 @@ void move_to(float target_position, AS5600 &encoder, Stepper &stepper)
 #if CONTROL_LOOP_DEBUG_OUTPUT
       if (millis() - last_serial_print_timestamp > CONTROL_LOOP_DEBUG_INTERVAL)
       {
-        DBG_PRINT("[MOVE] t=");
+        DBG_PRINT("[CONTROL][MOVETO] t=");
         DBG_PRINT(now - last_control_time);
         DBG_PRINT("ms\tPosErr=");
         DBG_PRINT(pos_error, 4);
@@ -297,17 +297,17 @@ void move_to(float target_position, AS5600 &encoder, Stepper &stepper)
 
 void home(Stepper &stepper, AS5600 &encoder)
 {
-  DBG_PRINTLN("[HOME] Starting homing process...");
+  DBG_PRINTLN("[CONTROL][HOMING] Starting homing process...");
 
   stepper.setSpeed(-HOMING_SPEED);
   stepper.move(-PI / 8.0, HOMING_SPEED, HOMING_ACCELERATION);
-  DBG_PRINTLN("[HOME] Stepper move initiated");
+  DBG_PRINTLN("[CONTROL][HOMING] Stepper move initiated");
 
   float first_bound = 0;
 
   stepper.start();
   stepper.accelerate(0, HOMING_SPEED, HOMING_ACCELERATION);
-  DBG_PRINTLN("[HOME] Stepper acceleration started");
+  DBG_PRINTLN("[CONTROL][HOMING] Stepper acceleration started");
 
   float filteredHallSensorValue = analogRead(HALL_EFFECT_SENSOR_PIN);
 
@@ -318,13 +318,13 @@ void home(Stepper &stepper, AS5600 &encoder)
     filteredHallSensorValue = HALL_EFFECT_SENSOR_ALPHA * raw + (1 - HALL_EFFECT_SENSOR_ALPHA) * filteredHallSensorValue;
 
 #if PRINT_HALL_SENSOR_VALUE
-    DBG_PRINT("[HOME] Hall sensor value: ");
+    DBG_PRINT("[CONTROL][HOMING] Hall sensor value: ");
     DBG_PRINTLN(filteredHallSensorValue);
 #endif
 
     if (filteredHallSensorValue < 1)
     {
-      DBG_PRINTLN("[HOME] Detected falling edge - Hall sensor triggered (first bound)");
+      DBG_PRINTLN("[CONTROL][HOMING] Detected falling edge - Hall sensor triggered (first bound)");
       break;
     }
 
@@ -332,7 +332,7 @@ void home(Stepper &stepper, AS5600 &encoder)
   }
 
   first_bound = encoder.getPosition();
-  DBG_PRINT("[HOME] First bound position: ");
+  DBG_PRINT("[CONTROL][HOMING] First bound position: ");
   DBG_PRINTLN(first_bound);
 
   while (true)
@@ -342,7 +342,7 @@ void home(Stepper &stepper, AS5600 &encoder)
 
     if (filteredHallSensorValue > 1)
     {
-      DBG_PRINTLN("[HOME] Detected rising edge - leaving Hall sensor");
+      DBG_PRINTLN("[CONTROL][HOMING] Detected rising edge - leaving Hall sensor");
       break;
     }
 
@@ -352,9 +352,9 @@ void home(Stepper &stepper, AS5600 &encoder)
   float current_pos = encoder.getPosition();
   float home = (current_pos - first_bound) / 2;
 
-  DBG_PRINT("[HOME] Current position: ");
+  DBG_PRINT("[CONTROL][HOMING] Current position: ");
   DBG_PRINTLN(current_pos);
-  DBG_PRINT("[HOME] Calculated home offset: ");
+  DBG_PRINT("[CONTROL][HOMING] Calculated home offset: ");
   DBG_PRINTLN(home);
 
   encoder.setPosition(current_pos - home);
@@ -368,8 +368,8 @@ void home(Stepper &stepper, AS5600 &encoder)
 
   move_to(0, encoder, stepper);
 
-  DBG_PRINTLN("[HOME] Finished homing");
-  DBG_PRINT("[HOME] Encoder position after homing: ");
+  DBG_PRINTLN("[CONTROL][HOMING] Finished homing");
+  DBG_PRINT("[CONTROL][HOMING] Encoder position after homing: ");
   DBG_PRINTLN(encoder.getPosition());
 
   delay(1000);
