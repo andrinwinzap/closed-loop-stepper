@@ -65,20 +65,22 @@ namespace ControlLoop
     {
       if (flag == Flag::EXECUTE_TRAJECTORY && *trajectory != nullptr)
       {
+        flag = Flag::NOTHING;
+        state = State::EXECUTING_TRAJECTORY;
         DBG_PRINTLN("[CONTROL] Starting trajectory execution...");
         execute_trajectory(*trajectory, encoder, stepper);
         DBG_PRINTLN("[CONTROL] Finished trajectory execution");
-
-        flag = Flag::IDLE;
+        state = State::IDLE;
       }
 
       if (flag == Flag::HOME)
       {
+        flag = Flag::NOTHING;
+        state = State::HOMING;
         DBG_PRINTLN("[CONTROL] Starting homing...");
         home(stepper, encoder);
         DBG_PRINTLN("[CONTROL] Finished homing");
-
-        flag = Flag::IDLE;
+        state = State::IDLE;
       }
 
       encoder.update();

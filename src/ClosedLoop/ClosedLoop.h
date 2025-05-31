@@ -11,9 +11,17 @@ namespace ControlLoop
 {
     enum class Flag
     {
+        NOTHING,
         IDLE,
         HOME,
         EXECUTE_TRAJECTORY
+    };
+
+    enum class State
+    {
+        IDLE,
+        HOMING,
+        EXECUTING_TRAJECTORY
     };
 
     struct Params
@@ -23,6 +31,8 @@ namespace ControlLoop
         volatile Flag *flag;
         Trajectory **trajectory;
     };
+
+    State state;
 
     float hermite_interpolate(const Waypoint &wp1,
                               const Waypoint &wp2,

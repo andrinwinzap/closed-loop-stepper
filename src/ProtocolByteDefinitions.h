@@ -25,7 +25,7 @@ namespace StatusByte
     {
         IDLE = 0x01,
         HOMING = 0x02,
-        EXECUTING_TRAJ = 0x03,
+        EXECUTING_TRAJECTORY = 0x03,
     };
 }
 

@@ -110,24 +110,24 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 
     case CommandByte::STATUS:
 
-        switch (control_loop_flag)
+        switch (ControlLoop::state)
         {
-        case ControlLoop::Flag::IDLE:
+        case ControlLoop::State::IDLE:
         {
             uint8_t payload[1] = {StatusByte::IDLE};
             com.send_packet(CommandByte::STATUS, payload, 1);
             break;
         }
-        case ControlLoop::Flag::HOME:
+        case ControlLoop::State::HOMING:
         {
             uint8_t payload[1] = {StatusByte::HOMING};
             com.send_packet(CommandByte::STATUS, payload, 1);
             break;
         }
 
-        case ControlLoop::Flag::EXECUTE_TRAJECTORY:
+        case ControlLoop::State::EXECUTING_TRAJECTORY:
         {
-            uint8_t payload[1] = {StatusByte::EXECUTING_TRAJ};
+            uint8_t payload[1] = {StatusByte::EXECUTING_TRAJECTORY};
             com.send_packet(CommandByte::STATUS, payload, 1);
             break;
         }
