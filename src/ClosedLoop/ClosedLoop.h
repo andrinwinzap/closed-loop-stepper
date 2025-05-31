@@ -32,7 +32,7 @@ namespace ControlLoop
         Trajectory **trajectory;
     };
 
-    State state;
+    extern State state;
 
     float hermite_interpolate(const Waypoint &wp1,
                               const Waypoint &wp2,

@@ -2,6 +2,8 @@
 
 namespace ControlLoop
 {
+  State state = State::IDLE;
+
   // Hermite interpolation taking elapsed time (ms) directly
   float hermite_interpolate(const Waypoint &wp1, const Waypoint &wp2, unsigned long elapsed)
   {
