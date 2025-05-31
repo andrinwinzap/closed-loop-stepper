@@ -6,6 +6,7 @@
 #include <Stepper/Stepper.h>
 #include <Trajectory/Trajectory.h>
 #include <Macros.h>
+#include <ProtocolByteDefinitions.h>
 
 AS5600 encoder(GEAR_RATIO);
 Stepper stepper(STEPPER_STEP_PIN, STEPPER_DIR_PIN, STEPPER_EN_PIN, GEAR_RATIO);
@@ -17,39 +18,13 @@ Trajectory *trajectory = nullptr;
 
 TaskHandle_t controlTaskHandle = nullptr;
 
-volatile ControlLoopFlag control_loop_flag = ControlLoopFlag::IDLE;
+volatile ControlLoopFlag control_loop_flag;
 
-ControlLoopParams controlParams = {
+ControlLoopParams control_loop_params = {
     .encoder = &encoder,
     .stepper = &stepper,
     .flag = &control_loop_flag,
     .trajectory = &trajectory};
-
-namespace CommandByte
-{
-    enum : uint8_t
-    {
-        PING = 0x01,
-        HOME = 0x02,
-        POS = 0x03,
-        LOAD_TRAJ = 0x04,
-        EXEC_TRAJ = 0x05,
-        FINISHED = 0x06,
-        STATUS = 0x07,
-        ACK = 0xEE,
-        NACK = 0xFF
-    };
-}
-
-namespace StatusByte
-{
-    enum : uint8_t
-    {
-        IDLE = 0x01,
-        HOMING = 0x02,
-        EXECUTING_TRAJ = 0x03,
-    };
-}
 
 void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 {
@@ -209,12 +184,14 @@ void setup()
     pinMode(HALL_EFFECT_SENSOR_PIN, INPUT_PULLUP);
     DBG_PRINTLN("[SETUP] Hall effect sensor pin configured");
 
+    control_loop_flag = ControlLoopFlag::IDLE;
+
     // Start control loop on Core 0
     xTaskCreatePinnedToCore(
         control_loop_task,
         "ControlLoopTask",
         4096,
-        &controlParams,
+        &control_loop_params,
         1,
         &controlTaskHandle,
         0 // Core 0
