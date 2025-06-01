@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <Serialization.h>
-#include <macros.h>
+#include <debug_macro.h>
 #include <byte_definitions.h>
 
 constexpr size_t MAX_PAYLOAD_SIZE = 1024;

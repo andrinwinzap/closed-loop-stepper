@@ -1,21 +1,5 @@
-#ifndef MACROS_H
-#define MACROS_H
-
-#define DEBUG_SERIAL Serial
-
-#if defined(DEBUG_OUTPUT)
-#define DBG_PRINT(...) DEBUG_SERIAL.print(__VA_ARGS__)
-#define DBG_PRINTLN(...) DEBUG_SERIAL.println(__VA_ARGS__)
-#else
-#define DBG_PRINT(...) \
-    do                 \
-    {                  \
-    } while (0)
-#define DBG_PRINTLN(...) \
-    do                   \
-    {                    \
-    } while (0)
-#endif
+#ifndef ACTUATOR_CONFIGURATION
+#define ACTUATOR_CONFIGURATION
 
 #if defined(ACTUATOR_CONFIG_1)
 #include <actuators/actuator_1.h>

@@ -5,7 +5,8 @@
 #include <AS5600.h>
 #include <Stepper.h>
 #include <Trajectory.h>
-#include <macros.h>
+#include <debug_macro.h>
+#include <actuator_configuration_macro.h>
 
 namespace ControlLoop
 {

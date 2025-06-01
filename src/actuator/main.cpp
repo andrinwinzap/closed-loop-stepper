@@ -5,7 +5,8 @@
 #include <SerialProtocol.h>
 #include <Stepper.h>
 #include <Trajectory.h>
-#include <macros.h>
+#include <debug_macro.h>
+#include <actuator_configuration_macro.h>
 
 HardwareSerial com_serial(2);
 SerialProtocol com(com_serial, PROTOCOL_ADDRESS);
