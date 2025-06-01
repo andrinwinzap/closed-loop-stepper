@@ -1,4 +1,4 @@
-#include "Trajectory.h"
+#include <Trajectory.h>
 
 ActuatorTrajectory::ActuatorTrajectory(const Waypoint *wps, size_t count)
 {

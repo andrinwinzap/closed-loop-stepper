@@ -1,12 +1,11 @@
 #include <Arduino.h>
-#include <AS5600/AS5600.h>
-#include <ClosedLoop/ClosedLoop.h>
-#include <Serialization/Serialization.h>
-#include <SerialProtocol/SerialProtocol.h>
-#include <Stepper/Stepper.h>
-#include <Trajectory/Trajectory.h>
-#include <Macros.h>
-#include <ProtocolByteDefinitions.h>
+#include <AS5600.h>
+#include "ClosedLoop.h"
+#include <Serialization.h>
+#include <SerialProtocol.h>
+#include <Stepper.h>
+#include <Trajectory.h>
+#include <macros.h>
 
 HardwareSerial com_serial(2);
 SerialProtocol com(com_serial, PROTOCOL_ADDRESS);

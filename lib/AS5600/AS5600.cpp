@@ -1,4 +1,4 @@
-#include "AS5600.h"
+#include <AS5600.h>
 
 AS5600 *AS5600::_instance = nullptr;
 

@@ -2,7 +2,7 @@
 #define TRAJECTORY_H
 
 #include <Arduino.h>
-#include <Serialization/Serialization.h>
+#include <Serialization.h>
 
 #define MAX_WAYPOINTS 64
 

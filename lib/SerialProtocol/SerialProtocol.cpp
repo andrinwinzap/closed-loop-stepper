@@ -1,4 +1,4 @@
-#include "SerialProtocol.h"
+#include <SerialProtocol.h>
 
 void SerialProtocol::parse_serial()
 {
@@ -127,9 +127,12 @@ void SerialParser::parse(uint8_t byte)
     {
     case ParserState::READ_ADDR:
         update_crc8(byte);
-        if (byte == address) {
+        if (byte == address)
+        {
             state = ParserState::READ_CMD;
-        } else {
+        }
+        else
+        {
             reset();
         }
         break;

@@ -2,10 +2,10 @@
 #define CLOSEDLOOP_H
 
 #include <Arduino.h>
-#include <AS5600/AS5600.h>
-#include <Stepper/Stepper.h>
-#include <Trajectory/Trajectory.h>
-#include <Macros.h>
+#include <AS5600.h>
+#include <Stepper.h>
+#include <Trajectory.h>
+#include <macros.h>
 
 namespace ControlLoop
 {
