@@ -113,17 +113,17 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         {
         case ControlLoop::State::IDLE:
         {
-            com.send_packet(Byte::Command::STATUS, Byte::Status::IDLE);
+            com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::IDLE);
             break;
         }
         case ControlLoop::State::HOMING:
         {
-            com.send_packet(Byte::Command::STATUS, Byte::Status::HOMING);
+            com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::HOMING);
             break;
         }
         case ControlLoop::State::EXECUTING_TRAJECTORY:
         {
-            com.send_packet(Byte::Command::STATUS, Byte::Status::EXECUTING_TRAJECTORY);
+            com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::EXECUTING_TRAJECTORY);
             break;
         }
         default:
