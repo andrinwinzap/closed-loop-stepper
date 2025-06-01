@@ -14,7 +14,7 @@ SerialProtocol com(com_serial, PROTOCOL_ADDRESS);
 AS5600 encoder(GEAR_RATIO);
 Stepper stepper(STEPPER_STEP_PIN, STEPPER_DIR_PIN, STEPPER_EN_PIN, GEAR_RATIO);
 volatile ControlLoop::Flag control_loop_flag;
-Trajectory *trajectory = nullptr;
+ActuatorTrajectory *trajectory = nullptr;
 
 ControlLoop::Params control_loop_params = {
     .encoder = &encoder,
@@ -63,7 +63,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
             trajectory = nullptr;
         }
 
-        trajectory = new Trajectory(payload, payload_len);
+        trajectory = new ActuatorTrajectory(payload, payload_len);
         DBG_PRINT("[CMD] New trajectory length: ");
         DBG_PRINTLN(trajectory->length);
 

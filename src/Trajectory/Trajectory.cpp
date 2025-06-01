@@ -1,6 +1,6 @@
 #include "Trajectory.h"
 
-Trajectory::Trajectory(const Waypoint *wps, size_t count)
+ActuatorTrajectory::ActuatorTrajectory(const Waypoint *wps, size_t count)
 {
     if (count > MAX_WAYPOINTS)
         count = MAX_WAYPOINTS;
@@ -11,7 +11,7 @@ Trajectory::Trajectory(const Waypoint *wps, size_t count)
     length = count;
 }
 
-Trajectory::Trajectory(const uint8_t *data, size_t len)
+ActuatorTrajectory::ActuatorTrajectory(const uint8_t *data, size_t len)
 {
     if (len < 1)
     {
@@ -39,7 +39,7 @@ Trajectory::Trajectory(const uint8_t *data, size_t len)
     length = count;
 }
 
-size_t Trajectory::serialize(uint8_t *outBuffer, size_t maxLen)
+size_t ActuatorTrajectory::serialize(uint8_t *outBuffer, size_t maxLen)
 {
     size_t totalBytes = 1 + length * 12;
     if (maxLen < totalBytes)

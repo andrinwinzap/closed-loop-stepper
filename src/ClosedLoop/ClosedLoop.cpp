@@ -61,7 +61,7 @@ namespace ControlLoop
     AS5600 &encoder = *params->encoder;
     Stepper &stepper = *params->stepper;
     volatile Flag &flag = *params->flag;
-    Trajectory **trajectory = params->trajectory;
+    ActuatorTrajectory **trajectory = params->trajectory;
 
     for (;;)
     {
@@ -219,7 +219,7 @@ namespace ControlLoop
     DBG_PRINTLN(wp2.timestamp);
   }
 
-  void execute_trajectory(Trajectory *trajectory, AS5600 &encoder, Stepper &stepper)
+  void execute_trajectory(ActuatorTrajectory *trajectory, AS5600 &encoder, Stepper &stepper)
   {
     if (trajectory == nullptr)
       return;

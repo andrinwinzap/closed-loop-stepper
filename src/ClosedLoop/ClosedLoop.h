@@ -29,7 +29,7 @@ namespace ControlLoop
         AS5600 *encoder;
         Stepper *stepper;
         volatile Flag *flag;
-        Trajectory **trajectory;
+        ActuatorTrajectory **trajectory;
     };
 
     extern State state;
@@ -48,7 +48,7 @@ namespace ControlLoop
 
     void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, Stepper &stepper);
 
-    void execute_trajectory(Trajectory *trajectory, AS5600 &encoder, Stepper &stepper);
+    void execute_trajectory(ActuatorTrajectory *trajectory, AS5600 &encoder, Stepper &stepper);
 
     void move_to(float position, AS5600 &encoder, Stepper &stepper);
 }
