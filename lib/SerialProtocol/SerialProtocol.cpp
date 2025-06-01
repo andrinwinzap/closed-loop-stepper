@@ -46,7 +46,7 @@ uint8_t SerialProtocol::crc8(const uint8_t *data, size_t len)
     return crc;
 }
 
-void SerialProtocol::send_packet(uint8_t cmd, const uint8_t *payload, uint16_t payload_len)
+void SerialProtocol::send_packet(uint8_t addr, uint8_t cmd, const uint8_t *payload, uint16_t payload_len)
 {
     size_t index = 0;
     packet[index++] = cmd;
@@ -70,10 +70,10 @@ void SerialProtocol::send_packet(uint8_t cmd, const uint8_t *payload, uint16_t p
     serial_port.write(escaped_packet, escaped_packet_len);
 }
 
-void SerialProtocol::send_packet(uint8_t cmd, const uint8_t payload_byte)
+void SerialProtocol::send_packet(uint8_t addr, uint8_t cmd, const uint8_t payload_byte)
 {
     uint8_t payload[1] = {payload_byte};
-    send_packet(cmd, payload, 1);
+    send_packet(addr, cmd, payload, 1);
 }
 
 size_t SerialProtocol::escape_packet(const uint8_t *data, size_t len, uint8_t *escaped_packet) const

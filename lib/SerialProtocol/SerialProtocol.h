@@ -68,8 +68,8 @@ public:
 
     size_t available();
     const Command *read();
-    void send_packet(uint8_t cmd, const uint8_t *payload = nullptr, uint16_t payload_len = 0);
-    void send_packet(uint8_t cmd, const uint8_t payload_byte);
+    void send_packet(uint8_t addr, uint8_t cmd, const uint8_t *payload = nullptr, uint16_t payload_len = 0);
+    void send_packet(uint8_t addr, uint8_t cmd, const uint8_t payload_byte);
 
 private:
     Stream &serial_port;

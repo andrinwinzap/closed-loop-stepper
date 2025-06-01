@@ -30,14 +30,14 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
     case Byte::Command::PING:
     {
         DBG_PRINTLN("[CMD] PING");
-        com.send_packet(Byte::Command::ACK);
+        com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
         break;
     }
     case Byte::Command::HOME:
     {
         DBG_PRINTLN("[CMD] HOME");
         control_loop_flag = ControlLoop::Flag::HOME;
-        com.send_packet(Byte::Command::ACK);
+        com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
         break;
     }
     case Byte::Command::POS:
@@ -48,7 +48,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         DBG_PRINTLN(pos);
         uint8_t payload[4];
         writeFloatLE(payload, pos);
-        com.send_packet(Byte::Command::POS, payload, 4);
+        com.send_packet(Byte::Address::MASTER, Byte::Command::POS, payload, 4);
         break;
     }
     case Byte::Command::LOAD_TRAJ:
@@ -88,7 +88,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
             }
         }
 
-        com.send_packet(Byte::Command::ACK);
+        com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
         break;
     }
     case Byte::Command::EXEC_TRAJ:
@@ -103,7 +103,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 
         control_loop_flag = ControlLoop::Flag::EXECUTE_TRAJECTORY;
         DBG_PRINTLN("[CMD] Trajectory execution triggered");
-        com.send_packet(Byte::Command::ACK);
+        com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
         break;
     }
     case Byte::Command::STATUS:
