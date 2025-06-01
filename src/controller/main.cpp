@@ -10,7 +10,17 @@ constexpr unsigned long TIMEOUT = 1000;
 HardwareSerial com_serial(2);
 SerialProtocol com(com_serial, PROTOCOL_ADDRESS);
 
-float pos(uint8_t addr)
+struct Pos
+{
+    float theta_1;
+    float theta_2;
+    float theta_3;
+    float theta_4;
+    float theta_5;
+    float theta_6;
+};
+
+float get_pos(uint8_t addr)
 {
     com.send_packet(addr, Byte::Command::POS);
     unsigned long start = millis();
@@ -28,6 +38,17 @@ float pos(uint8_t addr)
             }
         }
     }
+}
+
+float get_pos()
+{
+    Pos pos = {
+        .theta_1 = get_pos(Byte::Address::ACTUATOR_1),
+        .theta_2 = get_pos(Byte::Address::ACTUATOR_2),
+        .theta_3 = get_pos(Byte::Address::ACTUATOR_3),
+        .theta_4 = get_pos(Byte::Address::ACTUATOR_4),
+        .theta_5 = get_pos(Byte::Address::ACTUATOR_5),
+        .theta_6 = get_pos(Byte::Address::ACTUATOR_6)};
 }
 
 float ping(uint8_t addr)
