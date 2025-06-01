@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <Serialization.h>
 #include <macros.h>
+#include <byte_definitions.h>
 
 constexpr size_t MAX_PAYLOAD_SIZE = 1024;
 constexpr size_t MAX_PACKET_SIZE = MAX_PAYLOAD_SIZE + 5;        // Max unescaped packet size = addr(1) + cmd (1) + len (2) + payload + checksum (1)
@@ -26,62 +27,6 @@ struct Command
     uint8_t payload[MAX_PAYLOAD_SIZE];
     size_t payload_len;
 };
-
-namespace Byte
-{
-    namespace Protocol
-    {
-        enum : uint8_t
-        {
-            START = 0xAA,
-            ESCAPE = 0xAB,
-            ESCAPE_MASK = 0x20,
-            CRC8_POLY = 0x07
-        };
-    }
-
-    namespace Command
-    {
-        enum : uint8_t
-        {
-            PING = 0x01,
-            HOME = 0x02,
-            POS = 0x03,
-            LOAD_TRAJ = 0x04,
-            EXEC_TRAJ = 0x05,
-            FINISHED = 0x06,
-            STATUS = 0x07,
-            ACK = 0xEE,
-            NACK = 0xFF
-        };
-    }
-
-    namespace Status
-    {
-        enum : uint8_t
-        {
-            IDLE = 0x01,
-            HOMING = 0x02,
-            EXECUTING_TRAJECTORY = 0x03,
-        };
-    }
-
-    namespace Address
-    {
-        enum : uint8_t
-        {
-            BROADCAST = 0x00,
-            MASTER = 0x01,
-            ACTUATOR_1 = 0x02,
-            ACTUATOR_2 = 0x03,
-            ACTUATOR_3 = 0x04,
-            ACTUATOR_4 = 0x05,
-            ACTUATOR_5 = 0x06,
-            ACTUATOR_6 = 0x07,
-            TOOL = 0x08
-        };
-    }
-}
 
 class SerialParser
 {
