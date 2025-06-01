@@ -27,20 +27,20 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 {
     switch (cmd)
     {
-    case CommandByte::PING:
+    case Byte::Command::PING:
     {
         DBG_PRINTLN("[CMD] PING");
-        com.send_packet(CommandByte::ACK);
+        com.send_packet(Byte::Command::ACK);
         break;
     }
-    case CommandByte::HOME:
+    case Byte::Command::HOME:
     {
         DBG_PRINTLN("[CMD] HOME");
         control_loop_flag = ControlLoop::Flag::HOME;
-        com.send_packet(CommandByte::ACK);
+        com.send_packet(Byte::Command::ACK);
         break;
     }
-    case CommandByte::POS:
+    case Byte::Command::POS:
     {
         DBG_PRINTLN("[CMD] POS");
         float pos = encoder.getPosition();
@@ -48,10 +48,10 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         DBG_PRINTLN(pos);
         uint8_t payload[4];
         writeFloatLE(payload, pos);
-        com.send_packet(CommandByte::POS, payload, 4);
+        com.send_packet(Byte::Command::POS, payload, 4);
         break;
     }
-    case CommandByte::LOAD_TRAJ:
+    case Byte::Command::LOAD_TRAJ:
     {
         DBG_PRINTLN("[CMD] LOAD_TRAJ");
 
@@ -88,10 +88,10 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
             }
         }
 
-        com.send_packet(CommandByte::ACK);
+        com.send_packet(Byte::Command::ACK);
         break;
     }
-    case CommandByte::EXEC_TRAJ:
+    case Byte::Command::EXEC_TRAJ:
     {
         DBG_PRINTLN("[CMD] EXEC_TRAJ");
 
@@ -103,27 +103,27 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 
         control_loop_flag = ControlLoop::Flag::EXECUTE_TRAJECTORY;
         DBG_PRINTLN("[CMD] Trajectory execution triggered");
-        com.send_packet(CommandByte::ACK);
+        com.send_packet(Byte::Command::ACK);
         break;
     }
-    case CommandByte::STATUS:
+    case Byte::Command::STATUS:
     {
 
         switch (ControlLoop::state)
         {
         case ControlLoop::State::IDLE:
         {
-            com.send_packet(CommandByte::STATUS, StatusByte::IDLE);
+            com.send_packet(Byte::Command::STATUS, Byte::Status::IDLE);
             break;
         }
         case ControlLoop::State::HOMING:
         {
-            com.send_packet(CommandByte::STATUS, StatusByte::HOMING);
+            com.send_packet(Byte::Command::STATUS, Byte::Status::HOMING);
             break;
         }
         case ControlLoop::State::EXECUTING_TRAJECTORY:
         {
-            com.send_packet(CommandByte::STATUS, StatusByte::EXECUTING_TRAJECTORY);
+            com.send_packet(Byte::Command::STATUS, Byte::Status::EXECUTING_TRAJECTORY);
             break;
         }
         default:

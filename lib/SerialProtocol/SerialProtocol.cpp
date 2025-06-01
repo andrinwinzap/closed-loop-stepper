@@ -25,7 +25,7 @@ void SerialParser::update_crc8(uint8_t byte)
     for (int i = 0; i < 8; ++i)
     {
         crc8_acc = (crc8_acc & 0x80)
-                       ? (crc8_acc << 1) ^ CRC8_POLY
+                       ? (crc8_acc << 1) ^ Byte::Protocol::CRC8_POLY
                        : (crc8_acc << 1);
     }
 }
@@ -39,7 +39,7 @@ uint8_t SerialProtocol::crc8(const uint8_t *data, size_t len)
         for (int i = 0; i < 8; ++i)
         {
             crc = (crc & 0x80)
-                      ? (crc << 1) ^ CRC8_POLY
+                      ? (crc << 1) ^ Byte::Protocol::CRC8_POLY
                       : (crc << 1);
         }
     }
@@ -66,7 +66,7 @@ void SerialProtocol::send_packet(uint8_t cmd, const uint8_t *payload, uint16_t p
 
     uint8_t escaped_packet[MAX_ESCAPED_PACKET_SIZE];
     size_t escaped_packet_len = escape_packet(packet, index, escaped_packet);
-    serial_port.write(START_BYTE);
+    serial_port.write(Byte::Protocol::START);
     serial_port.write(escaped_packet, escaped_packet_len);
 }
 
@@ -82,12 +82,12 @@ size_t SerialProtocol::escape_packet(const uint8_t *data, size_t len, uint8_t *e
     for (size_t i = 0; i < len; i++)
     {
         uint8_t b = data[i];
-        if (b == START_BYTE || b == ESCAPE_BYTE)
+        if (b == Byte::Protocol::START || b == Byte::Protocol::ESCAPE)
         {
             if (index + 1 >= MAX_ESCAPED_PACKET_SIZE)
                 break; // prevent overflow
-            escaped_packet[index++] = ESCAPE_BYTE;
-            escaped_packet[index++] = b ^ ESCAPE_MASK;
+            escaped_packet[index++] = Byte::Protocol::ESCAPE;
+            escaped_packet[index++] = b ^ Byte::Protocol::ESCAPE_MASK;
         }
         else
         {
@@ -102,7 +102,7 @@ size_t SerialProtocol::escape_packet(const uint8_t *data, size_t len, uint8_t *e
 void SerialParser::parse(uint8_t byte)
 {
 
-    if (byte == START_BYTE)
+    if (byte == Byte::Protocol::START)
     {
         reset();
         state = ParserState::READ_ADDR;
@@ -113,10 +113,10 @@ void SerialParser::parse(uint8_t byte)
     {
         if (escape_next)
         {
-            byte ^= ESCAPE_MASK;
+            byte ^= Byte::Protocol::ESCAPE_MASK;
             escape_next = false;
         }
-        else if (byte == ESCAPE_BYTE)
+        else if (byte == Byte::Protocol::ESCAPE)
         {
             escape_next = true;
             return;

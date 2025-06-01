@@ -5,16 +5,10 @@
 #include <Serialization.h>
 #include <macros.h>
 
-constexpr uint8_t START_BYTE = 0xAA;
-constexpr uint8_t ESCAPE_BYTE = 0xAB;
-constexpr uint8_t ESCAPE_MASK = 0x20;
-
 constexpr size_t MAX_PAYLOAD_SIZE = 1024;
 constexpr size_t MAX_PACKET_SIZE = MAX_PAYLOAD_SIZE + 4;        // Max unescaped packet size = cmd (1) + len (2) + payload + checksum (1)
 constexpr size_t MAX_ESCAPED_PACKET_SIZE = MAX_PACKET_SIZE * 2; // worst case
 static constexpr size_t CMD_QUEUE_SIZE = 8;
-
-constexpr uint8_t CRC8_POLY = 0x07;
 
 enum class ParserState
 {
@@ -33,46 +27,60 @@ struct Command
     size_t payload_len;
 };
 
-namespace CommandByte
+namespace Byte
 {
-    enum : uint8_t
+    namespace Protocol
     {
-        PING = 0x01,
-        HOME = 0x02,
-        POS = 0x03,
-        LOAD_TRAJ = 0x04,
-        EXEC_TRAJ = 0x05,
-        FINISHED = 0x06,
-        STATUS = 0x07,
-        ACK = 0xEE,
-        NACK = 0xFF
-    };
-}
+        enum : uint8_t
+        {
+            START = 0xAA,
+            ESCAPE = 0xAB,
+            ESCAPE_MASK = 0x20,
+            CRC8_POLY = 0x07
+        };
+    }
 
-namespace StatusByte
-{
-    enum : uint8_t
+    namespace Command
     {
-        IDLE = 0x01,
-        HOMING = 0x02,
-        EXECUTING_TRAJECTORY = 0x03,
-    };
-}
+        enum : uint8_t
+        {
+            PING = 0x01,
+            HOME = 0x02,
+            POS = 0x03,
+            LOAD_TRAJ = 0x04,
+            EXEC_TRAJ = 0x05,
+            FINISHED = 0x06,
+            STATUS = 0x07,
+            ACK = 0xEE,
+            NACK = 0xFF
+        };
+    }
 
-namespace AddressByte
-{
-    enum : uint8_t
+    namespace Status
     {
-        BROADCAST = 0x00,
-        MASTER = 0x01,
-        ACTUATOR_1 = 0x02,
-        ACTUATOR_2 = 0x03,
-        ACTUATOR_3 = 0x04,
-        ACTUATOR_4 = 0x05,
-        ACTUATOR_5 = 0x06,
-        ACTUATOR_6 = 0x07,
-        TOOL = 0x08
-    };
+        enum : uint8_t
+        {
+            IDLE = 0x01,
+            HOMING = 0x02,
+            EXECUTING_TRAJECTORY = 0x03,
+        };
+    }
+
+    namespace Address
+    {
+        enum : uint8_t
+        {
+            BROADCAST = 0x00,
+            MASTER = 0x01,
+            ACTUATOR_1 = 0x02,
+            ACTUATOR_2 = 0x03,
+            ACTUATOR_3 = 0x04,
+            ACTUATOR_4 = 0x05,
+            ACTUATOR_5 = 0x06,
+            ACTUATOR_6 = 0x07,
+            TOOL = 0x08
+        };
+    }
 }
 
 class SerialParser
