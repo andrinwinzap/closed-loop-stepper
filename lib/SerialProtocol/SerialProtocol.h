@@ -6,7 +6,7 @@
 #include <macros.h>
 
 constexpr size_t MAX_PAYLOAD_SIZE = 1024;
-constexpr size_t MAX_PACKET_SIZE = MAX_PAYLOAD_SIZE + 4;        // Max unescaped packet size = cmd (1) + len (2) + payload + checksum (1)
+constexpr size_t MAX_PACKET_SIZE = MAX_PAYLOAD_SIZE + 5;        // Max unescaped packet size = addr(1) + cmd (1) + len (2) + payload + checksum (1)
 constexpr size_t MAX_ESCAPED_PACKET_SIZE = MAX_PACKET_SIZE * 2; // worst case
 static constexpr size_t CMD_QUEUE_SIZE = 8;
 
