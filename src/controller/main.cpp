@@ -5,8 +5,50 @@
 #include <debug_macro.h>
 #include <controller.h>
 
+constexpr unsigned long TIMEOUT = 1000;
+
 HardwareSerial com_serial(2);
 SerialProtocol com(com_serial, PROTOCOL_ADDRESS);
+
+float pos(uint8_t addr)
+{
+    com.send_packet(addr, Byte::Command::POS);
+    unsigned long start = millis();
+    while (1)
+    {
+        if (millis() - start > TIMEOUT)
+            return 0.0f;
+        if (com.available())
+        {
+            const Command *cmd = com.read();
+            if (cmd)
+            {
+                if (cmd->cmd == Byte::Command::POS)
+                    return readFloatLE(cmd->payload);
+            }
+        }
+    }
+}
+
+float ping(uint8_t addr)
+{
+    com.send_packet(addr, Byte::Command::PING);
+    unsigned long start = millis();
+    while (1)
+    {
+        if (millis() - start > TIMEOUT)
+            return false;
+        if (com.available())
+        {
+            const Command *cmd = com.read();
+            if (cmd)
+            {
+                if (cmd->cmd == Byte::Command::POS)
+                    return true;
+            }
+        }
+    }
+}
 
 void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 {
