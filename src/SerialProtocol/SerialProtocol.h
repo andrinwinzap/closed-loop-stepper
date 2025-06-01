@@ -19,6 +19,7 @@ constexpr uint8_t CRC8_POLY = 0x07;
 enum class ParserState
 {
     WAIT_START,
+    READ_ADDR,
     READ_CMD,
     READ_LEN,
     READ_PAYLOAD,
@@ -35,6 +36,9 @@ struct Command
 class SerialParser
 {
 public:
+    SerialParser(uint8_t addr)
+        : address(addr) {}
+
     size_t available() const { return queue_count; }
     const Command *read();
     void parse(uint8_t byte);
@@ -48,6 +52,7 @@ private:
     uint8_t cmd, checksum;
     uint8_t crc8_acc = 0x00;
     bool escape_next = false;
+    uint8_t address;
 
     Command queue[CMD_QUEUE_SIZE];
     size_t queue_head = 0;
@@ -63,8 +68,8 @@ private:
 class SerialProtocol
 {
 public:
-    SerialProtocol(Stream &serial)
-        : serial_port(serial) {}
+    SerialProtocol(Stream &serial, uint8_t addr)
+        : serial_port(serial), address(addr), parser(addr) {}
 
     size_t available();
     const Command *read();
@@ -73,6 +78,7 @@ public:
 
 private:
     Stream &serial_port;
+    uint8_t address;
     SerialParser parser;
     uint8_t packet[MAX_PACKET_SIZE];
     size_t escape_packet(const uint8_t *data, size_t len, uint8_t *escaped_packet) const;

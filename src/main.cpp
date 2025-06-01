@@ -9,7 +9,7 @@
 #include <ProtocolByteDefinitions.h>
 
 HardwareSerial com_serial(2);
-SerialProtocol com(com_serial);
+SerialProtocol com(com_serial, PROTOCOL_ADDRESS);
 
 AS5600 encoder(GEAR_RATIO);
 Stepper stepper(STEPPER_STEP_PIN, STEPPER_DIR_PIN, STEPPER_EN_PIN, GEAR_RATIO);

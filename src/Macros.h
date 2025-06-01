@@ -6,7 +6,7 @@
 #define DEBUG_ENABLED 1
 #define DEBUG_SERIAL Serial
 
-#define CONFIG_1
+#define ACTUATOR_2_CONFIG
 
 ///////////////////////////////////////////
 
@@ -26,8 +26,10 @@
 
 ////////////////////////////////////////////
 
-#if defined(CONFIG_1)
-#include <Configs/Config1.h>
+#if defined(ACTUATOR_1_CONFIG)
+#include <Configs/Actuator_1.h>
+#elif defined(ACTUATOR_2_CONFIG)
+#include <Configs/Actuator_2.h>
 #endif
 
 ////////////////////////////////////////////

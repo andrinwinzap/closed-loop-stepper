@@ -43,5 +43,6 @@ constexpr float KP_MOVE_TO = 1.0f;
 constexpr float POSITION_TOLERANCE = 0.01f;
 
 // Serial Communication Protocol
+#define PROTOCOL_ADDRESS 0x02
 #define RXD2 26
 #define TXD2 27

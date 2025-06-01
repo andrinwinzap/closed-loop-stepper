@@ -105,7 +105,7 @@ void SerialParser::parse(uint8_t byte)
     if (byte == START_BYTE)
     {
         reset();
-        state = ParserState::READ_CMD;
+        state = ParserState::READ_ADDR;
         return;
     }
 
@@ -125,6 +125,15 @@ void SerialParser::parse(uint8_t byte)
 
     switch (state)
     {
+    case ParserState::READ_ADDR:
+        update_crc8(byte);
+        if (byte == address) {
+            state = ParserState::READ_CMD;
+        } else {
+            reset();
+        }
+        break;
+
     case ParserState::READ_CMD:
         cmd = byte;
         update_crc8(byte);
