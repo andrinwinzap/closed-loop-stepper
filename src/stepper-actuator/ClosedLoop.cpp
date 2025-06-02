@@ -12,11 +12,11 @@ namespace ControlLoop
     Stepper &stepper = *params->stepper;
     volatile Flag &flag = *params->flag;
     ActuatorTrajectory *trajectory = nullptr;
+    TickType_t last_wake_time = xTaskGetTickCount();
 
     for (;;)
     {
       unsigned long now = millis();
-      static TickType_t last_wake_time = xTaskGetTickCount();
 
       if (flag != Flag::NOTHING)
       {
