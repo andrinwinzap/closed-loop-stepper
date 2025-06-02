@@ -3,7 +3,6 @@
 namespace ControlLoop
 {
   State state = State::IDLE;
-  TrajectoryContext trajectory_context;
 
   void control_loop_task(void *param)
   {
@@ -13,6 +12,7 @@ namespace ControlLoop
     volatile Flag &flag = *params->flag;
     ActuatorTrajectory *trajectory = nullptr;
     TickType_t last_wake_time = xTaskGetTickCount();
+    TrajectoryContext trajectory_context;
 
     for (;;)
     {
@@ -35,13 +35,15 @@ namespace ControlLoop
         case Flag::EXECUTE_TRAJECTORY:
           if (params->trajectory != nullptr)
           {
-            trajectory = *(params->trajectory);
             state = State::EXECUTING_TRAJECTORY;
-            trajectory_context = TrajectoryContext{}; // Reset context
+            trajectory = *(params->trajectory);
+            trajectory_context.segment_index = 0;
+            trajectory_context.segment_start = now;
             trajectory_context.wp1 = &trajectory->waypoints[0];
             trajectory_context.wp2 = &trajectory->waypoints[1];
             trajectory_context.filtered_vel = encoder.getSpeed();
-            trajectory_context.segment_start = now;
+            trajectory_context.last_control_speed = 0;
+            trajectory_context.stall_start_time = 0;
             stepper.start();
             DBG_PRINTLN("[CONTROL] Start trajectory execution");
           }
