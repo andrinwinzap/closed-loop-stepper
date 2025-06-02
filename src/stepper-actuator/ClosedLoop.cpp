@@ -106,7 +106,7 @@ namespace ControlLoop
             DBG_PRINTLN(trajectory_context.filtered_vel, 4);
 
             *trajectory_context.wp1 = {
-                encoder.getPosition(),
+                measured_pos,
                 0.0f,
                 trajectory_context.wp1->timestamp + delta_time};
             trajectory_context.segment_start = now;
