@@ -69,7 +69,7 @@ namespace ControlLoop
             stepper.stop();
             state = State::IDLE;
             DBG_PRINTLN("[CONTROL] Finished trajectory");
-            continue;
+            break;
           }
           else
           {
