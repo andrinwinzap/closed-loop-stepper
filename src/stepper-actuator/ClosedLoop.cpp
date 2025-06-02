@@ -92,9 +92,9 @@ namespace ControlLoop
         {
           if (trajectory_context.stall_start_time == 0)
           {
-            trajectory_context.stall_start_time = millis();
+            trajectory_context.stall_start_time = now;
           }
-          else if (millis() - trajectory_context.stall_start_time > STALL_TIME_THRESHOLD)
+          else if (now - trajectory_context.stall_start_time > STALL_TIME_THRESHOLD)
           {
             DBG_PRINT("[CONTROL][TRAJ][STALL] PosErr=");
             DBG_PRINT(pos_error, 4);
