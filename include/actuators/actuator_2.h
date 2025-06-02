@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 // Stepper Motor
 #define STEPPER_STEP_PIN 17
 #define STEPPER_DIR_PIN 16
@@ -28,7 +30,8 @@ constexpr float MAX_ACCELERATION = 0.3f;
 constexpr float KF = 1.0f;  // Velocity feed forward gain
 constexpr float KP = 10.0f; // Proportional gain
 constexpr float KV = 1.0f;  // Derivative gain
-constexpr float CONTROL_LOOP_FREQUENCY = 500.0f;
+constexpr int CONTROL_LOOP_FREQUENCY = 500;
+constexpr TickType_t CONTROL_LOOP_PERIOD_TICKS = configTICK_RATE_HZ / CONTROL_LOOP_FREQUENCY;
 constexpr float CONTROL_LOOP_INTERVAL = 1000.0f / CONTROL_LOOP_FREQUENCY;
 constexpr float CONTROL_LOOP_DEBUG_FREQUENCY = 100.0f;
 constexpr float CONTROL_LOOP_DEBUG_INTERVAL = 1000.0f / CONTROL_LOOP_DEBUG_FREQUENCY;

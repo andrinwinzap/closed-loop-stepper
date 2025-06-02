@@ -16,6 +16,7 @@ namespace ControlLoop
     for (;;)
     {
       unsigned long now = millis();
+      static TickType_t last_wake_time = xTaskGetTickCount();
 
       if (flag != Flag::NOTHING)
       {
@@ -129,7 +130,7 @@ namespace ControlLoop
       }
 
       encoder.update();
-      vTaskDelay(pdMS_TO_TICKS(1)); // Run at ~1kHz
+      vTaskDelayUntil(&last_wake_time, CONTROL_LOOP_PERIOD_TICKS);
     }
   }
 
