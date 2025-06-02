@@ -3,6 +3,7 @@
 namespace ControlLoop
 {
   State state = State::IDLE;
+  TrajectoryContext trajectory_context;
 
   void control_loop_task(void *param)
   {
@@ -10,28 +11,119 @@ namespace ControlLoop
     AS5600 &encoder = *params->encoder;
     Stepper &stepper = *params->stepper;
     volatile Flag &flag = *params->flag;
-    ActuatorTrajectory **trajectory = params->trajectory;
+    ActuatorTrajectory *trajectory = *(params->trajectory);
 
     for (;;)
     {
-      if (flag == Flag::EXECUTE_TRAJECTORY && *trajectory != nullptr)
+      unsigned long now = millis();
+
+      if (flag != Flag::NOTHING)
       {
-        flag = Flag::NOTHING;
-        state = State::EXECUTING_TRAJECTORY;
-        DBG_PRINTLN("[CONTROL] Starting trajectory execution...");
-        execute_trajectory(*trajectory, encoder, stepper);
-        DBG_PRINTLN("[CONTROL] Finished trajectory execution");
-        state = State::IDLE;
+        switch (flag)
+        {
+        case Flag::IDLE:
+          state = State::IDLE;
+          flag = Flag::NOTHING;
+          break;
+
+        case Flag::HOME:
+          state = State::HOMING;
+          flag = Flag::NOTHING;
+          break;
+
+        case Flag::EXECUTE_TRAJECTORY:
+          if (trajectory != nullptr)
+          {
+            state = State::EXECUTING_TRAJECTORY;
+            trajectory_context = TrajectoryContext{}; // Reset context
+            trajectory_context.wp1 = &trajectory->waypoints[0];
+            trajectory_context.wp2 = &trajectory->waypoints[1];
+            trajectory_context.filtered_vel = encoder.getSpeed();
+            trajectory_context.segment_start = now;
+            stepper.start();
+            DBG_PRINTLN("[CONTROL] Start trajectory execution");
+          }
+          flag = Flag::NOTHING;
+          break;
+
+        default:
+          break;
+        }
       }
 
-      if (flag == Flag::HOME)
+      switch (state)
       {
-        flag = Flag::NOTHING;
-        state = State::HOMING;
-        DBG_PRINTLN("[CONTROL] Starting homing...");
-        home(stepper, encoder);
-        DBG_PRINTLN("[CONTROL] Finished homing");
-        state = State::IDLE;
+      case State::EXECUTING_TRAJECTORY:
+      {
+        unsigned long delta_time = now - trajectory_context.segment_start;
+
+        if (delta_time >= trajectory_context.wp2->timestamp - trajectory_context.wp2->timestamp)
+        {
+          trajectory_context.segment_index++;
+          if (trajectory_context.segment_index >= trajectory->length - 1)
+          {
+            stepper.stop();
+            state = State::IDLE;
+            DBG_PRINTLN("[CONTROL] Finished trajectory");
+            return;
+          }
+          else
+          {
+            trajectory->waypoints[trajectory_context.segment_index].position = encoder.getPosition();
+            trajectory->waypoints[trajectory_context.segment_index].velocity = encoder.getSpeed();
+            trajectory_context.wp1 = &trajectory->waypoints[trajectory_context.segment_index];
+            trajectory_context.wp2 = &trajectory->waypoints[trajectory_context.segment_index + 1];
+          }
+          break;
+        }
+
+        float desired_pos = hermite_interpolate(*trajectory_context.wp1, *trajectory_context.wp2, delta_time);
+        float desired_vel = hermite_velocity(*trajectory_context.wp1, *trajectory_context.wp2, delta_time);
+
+        float measured_pos = encoder.getPosition();
+        float measured_vel = encoder.getSpeed();
+        trajectory_context.filtered_vel = VELOCITY_FILTER_APHA * measured_vel + (1 - VELOCITY_FILTER_APHA) * trajectory_context.filtered_vel;
+
+        float pos_error = desired_pos - measured_pos;
+        float vel_error = desired_vel - trajectory_context.filtered_vel;
+
+        if (trajectory_context.filtered_vel < STALL_VELOCITY_THRESHOLD && pos_error > STALL_POSITION_ERROR_THRESHOLD)
+        {
+          if (trajectory_context.stall_start_time == 0)
+          {
+            trajectory_context.stall_start_time = millis();
+          }
+          else if (millis() - trajectory_context.stall_start_time > STALL_TIME_THRESHOLD)
+          {
+            DBG_PRINT("[CONTROL][TRAJ][STALL] PosErr=");
+            DBG_PRINT(pos_error, 4);
+            DBG_PRINT("\tFilteredVel=");
+            DBG_PRINTLN(trajectory_context.filtered_vel, 4);
+
+            *trajectory_context.wp1 = {
+                encoder.getPosition(),
+                0.0f,
+                trajectory_context.wp1->timestamp + delta_time};
+            break;
+          }
+        }
+        else
+        {
+          trajectory_context.stall_start_time = 0;
+        }
+
+        float control_speed = KF * desired_vel + KP * pos_error + KV * vel_error;
+
+        if (control_speed != trajectory_context.last_control_speed)
+        {
+          stepper.setSpeed(control_speed);
+          trajectory_context.last_control_speed = control_speed;
+        }
+      }
+      break;
+
+      default:
+        break;
       }
 
       encoder.update();
