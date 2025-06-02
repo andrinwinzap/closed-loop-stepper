@@ -30,4 +30,12 @@ struct RobotTrajectory
     // NOT IMPLEMENTED
 };
 
+float hermite_interpolate(const Waypoint &wp1,
+                          const Waypoint &wp2,
+                          unsigned long elapsed);
+
+float hermite_velocity(const Waypoint &wp1,
+                       const Waypoint &wp2,
+                       unsigned long elapsed);
+
 #endif
