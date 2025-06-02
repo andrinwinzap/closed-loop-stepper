@@ -50,10 +50,6 @@ namespace ControlLoop
 
     void home(Stepper &stepper, AS5600 &encoder);
 
-    void execute_trajectory_segment(Waypoint &wp1, Waypoint &wp2, AS5600 &encoder, Stepper &stepper);
-
-    void execute_trajectory(ActuatorTrajectory *trajectory, AS5600 &encoder, Stepper &stepper);
-
     void move_to(float position, AS5600 &encoder, Stepper &stepper);
 }
 
