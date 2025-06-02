@@ -11,7 +11,7 @@ namespace ControlLoop
     AS5600 &encoder = *params->encoder;
     Stepper &stepper = *params->stepper;
     volatile Flag &flag = *params->flag;
-    ActuatorTrajectory *trajectory = *(params->trajectory);
+    ActuatorTrajectory **trajectory = params->trajectory;
 
     for (;;)
     {
@@ -32,12 +32,12 @@ namespace ControlLoop
           break;
 
         case Flag::EXECUTE_TRAJECTORY:
-          if (trajectory != nullptr)
+          if (*trajectory != nullptr)
           {
             state = State::EXECUTING_TRAJECTORY;
             trajectory_context = TrajectoryContext{}; // Reset context
-            trajectory_context.wp1 = &trajectory->waypoints[0];
-            trajectory_context.wp2 = &trajectory->waypoints[1];
+            trajectory_context.wp1 = &(*trajectory)->waypoints[0];
+            trajectory_context.wp2 = &(*trajectory)->waypoints[1];
             trajectory_context.filtered_vel = encoder.getSpeed();
             trajectory_context.segment_start = now;
             stepper.start();
@@ -57,22 +57,23 @@ namespace ControlLoop
       {
         unsigned long delta_time = now - trajectory_context.segment_start;
 
-        if (delta_time >= trajectory_context.wp2->timestamp - trajectory_context.wp2->timestamp)
+        if (delta_time >= trajectory_context.wp2->timestamp - trajectory_context.wp1->timestamp)
         {
           trajectory_context.segment_index++;
-          if (trajectory_context.segment_index >= trajectory->length - 1)
+          if (trajectory_context.segment_index >= (*trajectory)->length - 1)
           {
             stepper.stop();
             state = State::IDLE;
             DBG_PRINTLN("[CONTROL] Finished trajectory");
-            return;
+            continue;
           }
           else
           {
-            trajectory->waypoints[trajectory_context.segment_index].position = encoder.getPosition();
-            trajectory->waypoints[trajectory_context.segment_index].velocity = encoder.getSpeed();
-            trajectory_context.wp1 = &trajectory->waypoints[trajectory_context.segment_index];
-            trajectory_context.wp2 = &trajectory->waypoints[trajectory_context.segment_index + 1];
+            (*trajectory)->waypoints[trajectory_context.segment_index].position = encoder.getPosition();
+            (*trajectory)->waypoints[trajectory_context.segment_index].velocity = encoder.getSpeed();
+            trajectory_context.wp1 = &(*trajectory)->waypoints[trajectory_context.segment_index];
+            trajectory_context.wp2 = &(*trajectory)->waypoints[trajectory_context.segment_index + 1];
+            trajectory_context.segment_start = now;
           }
           break;
         }
@@ -104,6 +105,7 @@ namespace ControlLoop
                 encoder.getPosition(),
                 0.0f,
                 trajectory_context.wp1->timestamp + delta_time};
+            trajectory_context.segment_start = now;
             break;
           }
         }
