@@ -32,7 +32,7 @@ namespace ControlLoop
           break;
 
         case Flag::EXECUTE_TRAJECTORY:
-          if (*trajectory != nullptr)
+          if (trajectory != nullptr && *trajectory != nullptr)
           {
             state = State::EXECUTING_TRAJECTORY;
             trajectory_context = TrajectoryContext{}; // Reset context
