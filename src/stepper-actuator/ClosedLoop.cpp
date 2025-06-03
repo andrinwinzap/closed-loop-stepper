@@ -101,7 +101,7 @@ namespace ControlLoop
         {
         case HomingState::WAITING_FOR_HOMING:
         {
-          if (filtered_hall_sensor_value < 1)
+          if (filtered_hall_sensor_value < HALL_EFFECT_SENSOR_LOW_THRESHOLD)
           {
             if (initial_home_position_start == 0)
             {
@@ -136,7 +136,7 @@ namespace ControlLoop
 
         case HomingState::PREPARING:
         {
-          if (fabs(encoder.getPosition()) >= 0.2)
+          if (fabs(encoder.getPosition()) >= HOMING_SEQUENCE_OFFSET)
           {
             stepper.setSpeed(HOMING_SPEED);
             homing_state = HomingState::CW_EDGE;
@@ -147,7 +147,7 @@ namespace ControlLoop
 
         case HomingState::CW_EDGE:
         {
-          if (filtered_hall_sensor_value < 1)
+          if (filtered_hall_sensor_value < HALL_EFFECT_SENSOR_LOW_THRESHOLD)
           {
             cw_edge = encoder.getPosition();
             DBG_PRINT("[Control] CW edge position found: ");
@@ -159,13 +159,12 @@ namespace ControlLoop
 
         case HomingState::CCW_EDGE:
         {
-          if (filtered_hall_sensor_value > 4000)
+          if (filtered_hall_sensor_value > HALL_EFFECT_SENSOR_HIGH_THRESHOLD)
           {
             ccw_edge = encoder.getPosition();
             encoder.setPosition(((ccw_edge - cw_edge) / 2.0f));
             DBG_PRINT("[Control] CCW edge position found: ");
             DBG_PRINTLN(ccw_edge);
-            DBG_PRINTLN(encoder.getPosition());
             homing_state = HomingState::HOMED;
             *target_position = 0;
             state = State::POSITION;
