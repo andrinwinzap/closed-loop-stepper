@@ -40,6 +40,15 @@ namespace ControlLoop
       {
         switch (flag)
         {
+
+        case Flag::ESTOP:
+          state = State::ESTOP;
+          stepper.stop();
+          stepper.disable();
+          DBG_PRINTLN("[CONTROL] ESTOP TRIGGERED!");
+          flag = Flag::NOTHING;
+          break;
+
         case Flag::IDLE:
           state = State::IDLE;
           flag = Flag::NOTHING;

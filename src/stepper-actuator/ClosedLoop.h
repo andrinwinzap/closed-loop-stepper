@@ -15,7 +15,8 @@ namespace ControlLoop
         NOTHING,
         IDLE,
         POSITION,
-        TRAJECTORY
+        TRAJECTORY,
+        ESTOP
     };
 
     enum class State
@@ -23,7 +24,8 @@ namespace ControlLoop
         IDLE,
         HOMING,
         POSITION,
-        TRAJECTORY
+        TRAJECTORY,
+        ESTOP
     };
 
     enum class HomingState

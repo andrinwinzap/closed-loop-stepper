@@ -39,12 +39,22 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
         break;
     }
+
+    case Byte::Command::ESTOP:
+    {
+        DBG_PRINTLN("[CMD] ESTOP");
+        control_loop_flag = ControlLoop::Flag::ESTOP;
+        com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
+        break;
+    }
+
     case Byte::Command::HOME:
     {
         DBG_PRINTLN("[CMD] HOME");
         com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
         break;
     }
+
     case Byte::Command::POS:
     {
         DBG_PRINTLN("[CMD] POS");
