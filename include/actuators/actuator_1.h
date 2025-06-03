@@ -14,16 +14,16 @@ constexpr int HALL_EFFECT_SENSOR_HIGH_THRESHOLD = 4000;
 constexpr int HALL_EFFECT_SENSOR_LOW_THRESHOLD = 1;
 
 // Homing
-constexpr int BEEP_DURATION = 100;                         // ms
-constexpr int INITIAL_HOME_POSITION_DETECTION_DELAY = 100; // ms
-constexpr int HOMING_SEQUENCE_DELAY = 1000;                // ms
-constexpr float HOMING_SEQUENCE_OFFSET = 0.2;              // rad
+constexpr int BEEP_DURATION = 300;                        // ms
+constexpr int INITIAL_HOME_POSITION_DETECTION_DELAY = 50; // ms
+constexpr int HOMING_SEQUENCE_DELAY = 1000;               // ms
+constexpr float HOMING_SEQUENCE_OFFSET = 0.2;             // rad
 
 // Gearbox
 constexpr float GEAR_RATIO = 15.0;
 
 // SPEED & ACCELERATION
-constexpr float HOMING_SPEED = 0.05;     // rad/s
+constexpr float HOMING_SPEED = 0.1;      // rad/s
 constexpr float MAX_SPEED = 6.0f;        // rad/s
 constexpr float MAX_ACCELERATION = 0.3f; // rad/s²
 
