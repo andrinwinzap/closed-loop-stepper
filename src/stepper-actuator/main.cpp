@@ -17,13 +17,15 @@ volatile ControlLoop::State control_loop_state;
 volatile ControlLoop::Flag control_loop_flag;
 
 ActuatorTrajectory *trajectory = nullptr;
+float target_position;
 
 ControlLoop::Params control_loop_params = {
     .stepper = &stepper,
     .encoder = &encoder,
     .state = &control_loop_state,
     .flag = &control_loop_flag,
-    .trajectory = &trajectory};
+    .trajectory = &trajectory,
+    .target_position = &target_position};
 
 TaskHandle_t controlTaskHandle = nullptr;
 

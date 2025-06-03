@@ -34,6 +34,7 @@ namespace ControlLoop
         volatile State *state;
         volatile Flag *flag;
         ActuatorTrajectory **trajectory;
+        float *target_position;
     };
 
     void task(void *param);
