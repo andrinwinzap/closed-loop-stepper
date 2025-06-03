@@ -11,11 +11,10 @@ namespace ControlLoop
     AS5600 &encoder = *params->encoder;
     volatile State &state = *params->state;
     volatile Flag &flag = *params->flag;
-    ActuatorTrajectory **trajectory_ptr_ptr = params->trajectory;
-    float *target_position_ptr = params->target_position;
+    ActuatorTrajectory **trajectory_ptr = params->trajectory;
+    float *target_position = params->target_position;
 
-    ActuatorTrajectory *trajectory_ptr = nullptr;
-    float target_position;
+    ActuatorTrajectory *trajectory = nullptr;
 
     float filtered_vel = encoder.getSpeed();
     float last_control_speed = 0;
@@ -50,10 +49,9 @@ namespace ControlLoop
           break;
 
         case Flag::POSITION:
-          if (target_position_ptr != nullptr)
+          if (target_position != nullptr)
           {
             state = State::POSITION;
-            target_position = *target_position_ptr;
             filtered_vel = encoder.getSpeed();
             last_control_speed = 0;
             stall_start_time = 0;
@@ -64,14 +62,14 @@ namespace ControlLoop
           break;
 
         case Flag::TRAJECTORY:
-          if (trajectory_ptr_ptr != nullptr && *trajectory_ptr_ptr != nullptr)
+          if (trajectory_ptr != nullptr && *trajectory_ptr != nullptr)
           {
             state = State::TRAJECTORY;
-            trajectory_ptr = *trajectory_ptr_ptr;
+            trajectory = *trajectory_ptr;
             trajectory_context.segment_index = 0;
             trajectory_context.segment_start = now;
-            trajectory_context.wp1 = &trajectory_ptr->waypoints[0];
-            trajectory_context.wp2 = &trajectory_ptr->waypoints[1];
+            trajectory_context.wp1 = &trajectory->waypoints[0];
+            trajectory_context.wp2 = &trajectory->waypoints[1];
             filtered_vel = encoder.getSpeed();
             last_control_speed = 0;
             stall_start_time = 0;
@@ -94,7 +92,7 @@ namespace ControlLoop
         float dt = (now - last_control_speed) * 0.001f; // ms to s
 
         float current_position = encoder.getPosition();
-        float pos_error = target_position - current_position;
+        float pos_error = *target_position - current_position;
 
         if (fabs(pos_error) <= POSITION_TOLERANCE)
         {
@@ -133,7 +131,7 @@ namespace ControlLoop
         if (delta_time >= trajectory_context.wp2->timestamp - trajectory_context.wp1->timestamp)
         {
           trajectory_context.segment_index++;
-          if (trajectory_context.segment_index >= trajectory_ptr->length - 1)
+          if (trajectory_context.segment_index >= trajectory->length - 1)
           {
             stepper.stop();
             state = State::IDLE;
@@ -142,10 +140,10 @@ namespace ControlLoop
           }
           else
           {
-            trajectory_ptr->waypoints[trajectory_context.segment_index].position = encoder.getPosition();
-            trajectory_ptr->waypoints[trajectory_context.segment_index].velocity = encoder.getSpeed();
-            trajectory_context.wp1 = &trajectory_ptr->waypoints[trajectory_context.segment_index];
-            trajectory_context.wp2 = &trajectory_ptr->waypoints[trajectory_context.segment_index + 1];
+            trajectory->waypoints[trajectory_context.segment_index].position = encoder.getPosition();
+            trajectory->waypoints[trajectory_context.segment_index].velocity = encoder.getSpeed();
+            trajectory_context.wp1 = &trajectory->waypoints[trajectory_context.segment_index];
+            trajectory_context.wp2 = &trajectory->waypoints[trajectory_context.segment_index + 1];
             trajectory_context.segment_start = now;
           }
           break;
