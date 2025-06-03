@@ -125,7 +125,7 @@ bool AS5600::magnetDetected()
 
 void AS5600::setPosition(float angle)
 {
-    _position = angle;
+    _position = angle * _gear_ratio;
     _lastRawAngle = getRawAngle();
 }
 
