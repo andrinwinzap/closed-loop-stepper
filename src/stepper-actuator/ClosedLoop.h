@@ -15,38 +15,26 @@ namespace ControlLoop
         NOTHING,
         IDLE,
         HOME,
-        EXECUTE_TRAJECTORY
+        TRAJECTORY
     };
 
     enum class State
     {
         IDLE,
         HOMING,
-        EXECUTING_TRAJECTORY
+        TRAJECTORY
     };
 
     struct Params
     {
-        AS5600 *encoder;
         Stepper *stepper;
+        AS5600 *encoder;
+        volatile State *state;
         volatile Flag *flag;
         ActuatorTrajectory **trajectory;
     };
 
-    struct TrajectoryContext
-    {
-        size_t segment_index = 0;
-        unsigned long segment_start;
-        Waypoint *wp1 = nullptr;
-        Waypoint *wp2 = nullptr;
-        float filtered_vel;
-        float last_control_speed = 0;
-        unsigned long stall_start_time = 0;
-    };
-
-    extern State state;
-
-    void control_loop_task(void *param);
+    void task(void *param);
 
     void home(Stepper &stepper, AS5600 &encoder);
 

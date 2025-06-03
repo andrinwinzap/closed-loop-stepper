@@ -13,12 +13,15 @@ SerialProtocol com(com_serial, PROTOCOL_ADDRESS);
 
 AS5600 encoder(GEAR_RATIO);
 Stepper stepper(STEPPER_STEP_PIN, STEPPER_DIR_PIN, STEPPER_EN_PIN, GEAR_RATIO);
+volatile ControlLoop::State control_loop_state;
 volatile ControlLoop::Flag control_loop_flag;
+
 ActuatorTrajectory *trajectory = nullptr;
 
 ControlLoop::Params control_loop_params = {
-    .encoder = &encoder,
     .stepper = &stepper,
+    .encoder = &encoder,
+    .state = &control_loop_state,
     .flag = &control_loop_flag,
     .trajectory = &trajectory};
 
@@ -102,7 +105,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
             break;
         }
 
-        control_loop_flag = ControlLoop::Flag::EXECUTE_TRAJECTORY;
+        control_loop_flag = ControlLoop::Flag::TRAJECTORY;
         DBG_PRINTLN("[CMD] Trajectory execution triggered");
         com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
         break;
@@ -110,7 +113,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
     case Byte::Command::STATUS:
     {
 
-        switch (ControlLoop::state)
+        switch (control_loop_state)
         {
         case ControlLoop::State::IDLE:
         {
@@ -122,7 +125,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
             com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::HOMING);
             break;
         }
-        case ControlLoop::State::EXECUTING_TRAJECTORY:
+        case ControlLoop::State::TRAJECTORY:
         {
             com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::EXECUTING_TRAJECTORY);
             break;
@@ -179,7 +182,7 @@ void setup()
     control_loop_flag = ControlLoop::Flag::IDLE;
 
     xTaskCreatePinnedToCore(
-        ControlLoop::control_loop_task,
+        ControlLoop::task,
         "ControlLoopTask",
         4096,
         &control_loop_params,

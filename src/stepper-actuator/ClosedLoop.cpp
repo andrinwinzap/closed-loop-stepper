@@ -2,17 +2,32 @@
 
 namespace ControlLoop
 {
-  State state = State::IDLE;
 
-  void control_loop_task(void *param)
+  void task(void *param)
   {
     Params *params = static_cast<Params *>(param);
-    AS5600 &encoder = *params->encoder;
+
     Stepper &stepper = *params->stepper;
+    AS5600 &encoder = *params->encoder;
+    volatile State &state = *params->state;
     volatile Flag &flag = *params->flag;
+    ActuatorTrajectory **trajectory_ptr = params->trajectory;
+
     ActuatorTrajectory *trajectory = nullptr;
+
+    float filtered_vel = encoder.getSpeed();
+    float last_control_speed = 0;
+    unsigned long stall_start_time = 0;
+
+    struct TrajectoryContext
+    {
+      size_t segment_index = 0;
+      unsigned long segment_start;
+      Waypoint *wp1 = nullptr;
+      Waypoint *wp2 = nullptr;
+    } trajectory_context;
+
     TickType_t last_wake_time = xTaskGetTickCount();
-    TrajectoryContext trajectory_context;
 
     for (;;)
     {
@@ -32,18 +47,18 @@ namespace ControlLoop
           flag = Flag::NOTHING;
           break;
 
-        case Flag::EXECUTE_TRAJECTORY:
+        case Flag::TRAJECTORY:
           if (params->trajectory != nullptr)
           {
-            state = State::EXECUTING_TRAJECTORY;
-            trajectory = *(params->trajectory);
+            state = State::TRAJECTORY;
+            trajectory = *(trajectory_ptr);
             trajectory_context.segment_index = 0;
             trajectory_context.segment_start = now;
             trajectory_context.wp1 = &trajectory->waypoints[0];
             trajectory_context.wp2 = &trajectory->waypoints[1];
-            trajectory_context.filtered_vel = encoder.getSpeed();
-            trajectory_context.last_control_speed = 0;
-            trajectory_context.stall_start_time = 0;
+            filtered_vel = encoder.getSpeed();
+            last_control_speed = 0;
+            stall_start_time = 0;
             stepper.start();
             DBG_PRINTLN("[CONTROL] Start trajectory execution");
           }
@@ -57,7 +72,7 @@ namespace ControlLoop
 
       switch (state)
       {
-      case State::EXECUTING_TRAJECTORY:
+      case State::TRAJECTORY:
       {
         unsigned long delta_time = now - trajectory_context.segment_start;
 
@@ -87,23 +102,23 @@ namespace ControlLoop
 
         float measured_pos = encoder.getPosition();
         float measured_vel = encoder.getSpeed();
-        trajectory_context.filtered_vel = VELOCITY_FILTER_APHA * measured_vel + (1 - VELOCITY_FILTER_APHA) * trajectory_context.filtered_vel;
+        filtered_vel = VELOCITY_FILTER_APHA * measured_vel + (1 - VELOCITY_FILTER_APHA) * filtered_vel;
 
         float pos_error = desired_pos - measured_pos;
-        float vel_error = desired_vel - trajectory_context.filtered_vel;
+        float vel_error = desired_vel - filtered_vel;
 
-        if (trajectory_context.filtered_vel < STALL_VELOCITY_THRESHOLD && pos_error > STALL_POSITION_ERROR_THRESHOLD)
+        if (filtered_vel < STALL_VELOCITY_THRESHOLD && pos_error > STALL_POSITION_ERROR_THRESHOLD)
         {
-          if (trajectory_context.stall_start_time == 0)
+          if (stall_start_time == 0)
           {
-            trajectory_context.stall_start_time = now;
+            stall_start_time = now;
           }
-          else if (now - trajectory_context.stall_start_time > STALL_TIME_THRESHOLD)
+          else if (now - stall_start_time > STALL_TIME_THRESHOLD)
           {
             DBG_PRINT("[CONTROL][TRAJ][STALL] PosErr=");
             DBG_PRINT(pos_error, 4);
             DBG_PRINT("\tFilteredVel=");
-            DBG_PRINTLN(trajectory_context.filtered_vel, 4);
+            DBG_PRINTLN(filtered_vel, 4);
 
             *trajectory_context.wp1 = {
                 measured_pos,
@@ -115,15 +130,15 @@ namespace ControlLoop
         }
         else
         {
-          trajectory_context.stall_start_time = 0;
+          stall_start_time = 0;
         }
 
         float control_speed = KF * desired_vel + KP * pos_error + KV * vel_error;
 
-        if (control_speed != trajectory_context.last_control_speed)
+        if (control_speed != last_control_speed)
         {
           stepper.setSpeed(control_speed);
-          trajectory_context.last_control_speed = control_speed;
+          last_control_speed = control_speed;
         }
       }
       break;
