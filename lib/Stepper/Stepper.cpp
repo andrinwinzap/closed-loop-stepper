@@ -85,6 +85,8 @@ void IRAM_ATTR Stepper::onTimerISR()
   if (instance)
   {
     portENTER_CRITICAL_ISR(&instance->timerMux);
+    if (instance->beeper_mode && !digitalRead(instance->stepPin))
+      instance->toggleDirPin();
     instance->toggleStepPin();
     portEXIT_CRITICAL_ISR(&instance->timerMux);
   }
@@ -93,6 +95,11 @@ void IRAM_ATTR Stepper::onTimerISR()
 void Stepper::toggleStepPin()
 {
   digitalWrite(stepPin, !digitalRead(stepPin));
+}
+
+void Stepper::toggleDirPin()
+{
+  digitalWrite(dirPin, !digitalRead(dirPin));
 }
 
 void Stepper::updateTimer()
@@ -304,4 +311,18 @@ bool Stepper::updateAcceleration()
   }
 
   return accelerating;
+}
+
+void Stepper::activateBeeperMode()
+{
+  beeper_mode = true;
+  currentFrequency = 2000.0f;
+  updateTimer();
+  start();
+}
+
+void Stepper::disableBeeperMode()
+{
+  beeper_mode = false;
+  stop();
 }

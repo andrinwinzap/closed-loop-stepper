@@ -19,6 +19,8 @@ public:
   void stop();  // Stop continuous stepping
   void accelerate(float start_speed, float target_speed, float acceleration);
   bool updateAcceleration();
+  void activateBeeperMode();
+  void disableBeeperMode();
 
 private:
   uint8_t stepPin, dirPin, enPin;
@@ -35,6 +37,7 @@ private:
   bool accelerating = false;
   unsigned long last_acceleration_update = 0;
   float gear_ratio;
+  bool beeper_mode = false;
 
   hw_timer_t *timer = nullptr;
   portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
@@ -42,5 +45,6 @@ private:
   static Stepper *instance;
   static void IRAM_ATTR onTimerISR();
   void toggleStepPin();
+  void toggleDirPin();
   void updateTimer();
 };
