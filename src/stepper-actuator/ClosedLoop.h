@@ -26,6 +26,15 @@ namespace ControlLoop
         TRAJECTORY
     };
 
+    enum class HomingState
+    {
+        WAITING_FOR_HOMING,
+        PREPARING,
+        CW_EDGE,
+        CCW_EDGE,
+        HOMED
+    };
+
     struct Params
     {
         Stepper *stepper;
@@ -34,6 +43,14 @@ namespace ControlLoop
         volatile Flag *flag;
         ActuatorTrajectory **trajectory;
         float *target_position;
+    };
+
+    struct TrajectoryContext
+    {
+        size_t segment_index = 0;
+        unsigned long segment_start;
+        Waypoint *wp1 = nullptr;
+        Waypoint *wp2 = nullptr;
     };
 
     void task(void *param);

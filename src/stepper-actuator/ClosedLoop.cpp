@@ -13,39 +13,22 @@ namespace ControlLoop
     volatile State &state = *params->state;
     volatile Flag &flag = *params->flag;
     ActuatorTrajectory **trajectory_ptr = params->trajectory;
+    ActuatorTrajectory *trajectory = nullptr;
     float *target_position = params->target_position;
 
-    ActuatorTrajectory *trajectory = nullptr;
+    state = State::HOMING;
+    flag = Flag::NOTHING;
 
     float filtered_vel = encoder.getSpeed();
     float filtered_hall_sensor_value = analogRead(HALL_EFFECT_SENSOR_PIN);
     float last_control_speed = 0;
     unsigned long stall_start_time = 0;
-    state = State::HOMING;
-    flag = Flag::NOTHING;
 
-    enum class HomingState
-    {
-      WAITING_FOR_HOMING,
-      PREPARING,
-      CW_EDGE,
-      CCW_EDGE,
-      ZEROING,
-      HOMED
-    } homing_state;
-
-    homing_state = HomingState::WAITING_FOR_HOMING;
+    HomingState homing_state = HomingState::WAITING_FOR_HOMING;
     unsigned long initial_home_position_start;
-    float cw_edge;
-    float ccw_edge;
+    float cw_edge, ccw_edge;
 
-    struct TrajectoryContext
-    {
-      size_t segment_index = 0;
-      unsigned long segment_start;
-      Waypoint *wp1 = nullptr;
-      Waypoint *wp2 = nullptr;
-    } trajectory_context;
+    TrajectoryContext trajectory_context;
 
     TickType_t last_wake_time = xTaskGetTickCount();
 
