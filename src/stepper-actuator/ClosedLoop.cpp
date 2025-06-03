@@ -89,7 +89,7 @@ namespace ControlLoop
 
       case State::POSITION:
       {
-        float dt = (now - last_control_speed) * 0.001f; // ms to s
+        float dt = CONTROL_LOOP_INTERVAL * 0.001f; // ms to s
 
         float current_position = encoder.getPosition();
         float pos_error = *target_position - current_position;
