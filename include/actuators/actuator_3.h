@@ -20,7 +20,7 @@ constexpr int HOMING_SEQUENCE_DELAY = 1000;               // ms
 constexpr float HOMING_SEQUENCE_OFFSET = 0.2;             // rad
 
 // Gearbox
-constexpr float GEAR_RATIO = 15.0;
+constexpr float GEAR_RATIO = 13.0;
 
 // SPEED & ACCELERATION
 constexpr float HOMING_SPEED = 0.1;      // rad/s
