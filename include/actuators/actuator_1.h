@@ -14,6 +14,11 @@ constexpr float HALL_EFFECT_SENSOR_ALPHA = 0.9;
 constexpr float HALL_EFFECT_SENSOR_UPDATE_PERIOD = 1e6 / HALL_EFFECT_SENSOR_UPDATE_FREQUENCY;
 #define PRINT_HALL_SENSOR_VALUE false
 
+// Homing
+constexpr int BEEP_DURATION = 100;
+constexpr int INITIAL_HOME_POSITION_DETECTION_DELAY = 100;
+constexpr int HOMING_SEQUENCE_DELAY = 1000;
+
 // Gearbox
 constexpr float GEAR_RATIO = 15.0;
 

@@ -106,19 +106,29 @@ namespace ControlLoop
             if (initial_home_position_start == 0)
             {
               initial_home_position_start = now;
-              DBG_PRINTLN("[Control] Initial home position detected, verifying...");
             }
-            else if (now - initial_home_position_start > 2000)
+            else if (now - initial_home_position_start >= INITIAL_HOME_POSITION_DETECTION_DELAY + BEEP_DURATION + HOMING_SEQUENCE_DELAY)
             {
               encoder.setPosition(0);
               stepper.setSpeed(-HOMING_SPEED);
               stepper.start();
               homing_state = HomingState::PREPARING;
+            }
+            else if (now - initial_home_position_start >= INITIAL_HOME_POSITION_DETECTION_DELAY + BEEP_DURATION)
+            {
+              stepper.disableBeeperMode();
+            }
+            else if (now - initial_home_position_start >= INITIAL_HOME_POSITION_DETECTION_DELAY)
+            {
               DBG_PRINTLN("[Control] Initial home position found");
+              stepper.enable();
+              stepper.activateBeeperMode();
             }
           }
           else
           {
+            stepper.disableBeeperMode();
+            stepper.disable();
             initial_home_position_start = 0;
           }
           break;

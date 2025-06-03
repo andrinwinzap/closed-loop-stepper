@@ -180,7 +180,7 @@ void setup()
     DBG_PRINTLN("[SETUP] AS5600 ready");
 
     stepper.begin();
-    stepper.enable();
+    stepper.disable();
     stepper.setMicrosteps(STEPPER_MICROSTEPS);
     stepper.setStepsPerRevolution(STEPPER_STEPS_PER_REVOLUTION);
     stepper.setMaxSpeed(1000000);
