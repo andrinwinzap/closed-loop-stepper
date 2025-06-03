@@ -37,10 +37,6 @@ namespace ControlLoop
     };
 
     void task(void *param);
-
-    void home(Stepper &stepper, AS5600 &encoder);
-
-    void move_to(float position, AS5600 &encoder, Stepper &stepper);
 }
 
 #endif
