@@ -167,7 +167,6 @@ void setup()
             ;
     }
 
-    encoder.setUpdateFrequency(ENCODER_UPDATE_FREQUENCY);
     DBG_PRINTLN("[SETUP] AS5600 ready");
 
     stepper.begin();

@@ -14,9 +14,6 @@ constexpr float HALL_EFFECT_SENSOR_ALPHA = 0.9;
 constexpr float HALL_EFFECT_SENSOR_UPDATE_PERIOD = 1e6 / HALL_EFFECT_SENSOR_UPDATE_FREQUENCY;
 #define PRINT_HALL_SENSOR_VALUE false
 
-// Encoder
-constexpr float ENCODER_UPDATE_FREQUENCY = 10000.0f;
-
 // Gearbox
 constexpr float GEAR_RATIO = 15.0;
 
