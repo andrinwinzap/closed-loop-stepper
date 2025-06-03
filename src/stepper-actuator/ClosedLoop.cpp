@@ -5,6 +5,8 @@ namespace ControlLoop
 
   void task(void *param)
   {
+    DBG_PRINTLN("[CONTROL] Loop started");
+
     Params *params = static_cast<Params *>(param);
 
     Stepper &stepper = *params->stepper;
@@ -17,8 +19,26 @@ namespace ControlLoop
     ActuatorTrajectory *trajectory = nullptr;
 
     float filtered_vel = encoder.getSpeed();
+    float filtered_hall_sensor_value = analogRead(HALL_EFFECT_SENSOR_PIN);
     float last_control_speed = 0;
     unsigned long stall_start_time = 0;
+    state = State::HOMING;
+    flag = Flag::NOTHING;
+
+    enum class HomingState
+    {
+      WAITING_FOR_HOMING,
+      PREPARING,
+      CW_EDGE,
+      CCW_EDGE,
+      ZEROING,
+      HOMED
+    } homing_state;
+
+    homing_state = HomingState::WAITING_FOR_HOMING;
+    unsigned long initial_home_position_start;
+    float cw_edge;
+    float ccw_edge;
 
     struct TrajectoryContext
     {
@@ -40,11 +60,6 @@ namespace ControlLoop
         {
         case Flag::IDLE:
           state = State::IDLE;
-          flag = Flag::NOTHING;
-          break;
-
-        case Flag::HOME:
-          state = State::HOMING;
           flag = Flag::NOTHING;
           break;
 
@@ -87,6 +102,82 @@ namespace ControlLoop
       switch (state)
       {
 
+      case State::HOMING:
+      {
+        int raw = analogRead(HALL_EFFECT_SENSOR_PIN);
+        filtered_hall_sensor_value = HALL_EFFECT_SENSOR_ALPHA * raw + (1 - HALL_EFFECT_SENSOR_ALPHA) * filtered_hall_sensor_value;
+        switch (homing_state)
+        {
+        case HomingState::WAITING_FOR_HOMING:
+        {
+          if (filtered_hall_sensor_value < 1)
+          {
+            if (initial_home_position_start == 0)
+            {
+              initial_home_position_start = now;
+              DBG_PRINTLN("[Control] Initial home position detected, verifying...");
+            }
+            else if (now - initial_home_position_start > 2000)
+            {
+              encoder.setPosition(0);
+              stepper.setSpeed(-HOMING_SPEED);
+              stepper.start();
+              homing_state = HomingState::PREPARING;
+              DBG_PRINTLN("[Control] Initial home position found");
+            }
+          }
+          else
+          {
+            initial_home_position_start = 0;
+          }
+          break;
+        }
+
+        case HomingState::PREPARING:
+        {
+          if (fabs(encoder.getPosition()) >= 0.2)
+          {
+            stepper.setSpeed(HOMING_SPEED);
+            homing_state = HomingState::CW_EDGE;
+            DBG_PRINTLN("[Control] Preperation finished");
+          }
+          break;
+        }
+
+        case HomingState::CW_EDGE:
+        {
+          if (filtered_hall_sensor_value < 1)
+          {
+            cw_edge = encoder.getPosition();
+            DBG_PRINT("[Control] CW edge position found: ");
+            DBG_PRINTLN(cw_edge);
+            homing_state = HomingState::CCW_EDGE;
+          }
+          break;
+        }
+
+        case HomingState::CCW_EDGE:
+        {
+          if (filtered_hall_sensor_value > 4000)
+          {
+            ccw_edge = encoder.getPosition();
+            encoder.setPosition(((ccw_edge - cw_edge) / 2.0f));
+            DBG_PRINT("[Control] CCW edge position found: ");
+            DBG_PRINTLN(ccw_edge);
+            DBG_PRINTLN(encoder.getPosition());
+            homing_state = HomingState::HOMED;
+            *target_position = 0;
+            state = State::POSITION;
+          }
+          break;
+        }
+
+        default:
+          break;
+        }
+        break;
+      }
+
       case State::POSITION:
       {
         float dt = CONTROL_LOOP_INTERVAL * 0.001f; // ms to s
@@ -98,7 +189,7 @@ namespace ControlLoop
         {
           stepper.setSpeed(0);
           stepper.stop();
-          flag = Flag::IDLE;
+          state = State::IDLE;
           DBG_PRINTLN("[CONTROL][MOVETO] Target reached within tolerance.");
           break;
         }

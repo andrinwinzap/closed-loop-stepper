@@ -14,7 +14,6 @@ namespace ControlLoop
     {
         NOTHING,
         IDLE,
-        HOME,
         POSITION,
         TRAJECTORY
     };

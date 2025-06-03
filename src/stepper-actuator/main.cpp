@@ -42,7 +42,6 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
     case Byte::Command::HOME:
     {
         DBG_PRINTLN("[CMD] HOME");
-        control_loop_flag = ControlLoop::Flag::HOME;
         com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
         break;
     }

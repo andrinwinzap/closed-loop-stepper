@@ -10,7 +10,7 @@
 // Hall Effect Sensor
 #define HALL_EFFECT_SENSOR_PIN 15
 constexpr float HALL_EFFECT_SENSOR_UPDATE_FREQUENCY = 1000;
-constexpr float HALL_EFFECT_SENSOR_ALPHA = 0.2;
+constexpr float HALL_EFFECT_SENSOR_ALPHA = 0.9;
 constexpr float HALL_EFFECT_SENSOR_UPDATE_PERIOD = 1e6 / HALL_EFFECT_SENSOR_UPDATE_FREQUENCY;
 #define PRINT_HALL_SENSOR_VALUE false
 
@@ -21,7 +21,7 @@ constexpr float ENCODER_UPDATE_FREQUENCY = 10000.0f;
 constexpr float GEAR_RATIO = 15.0;
 
 // SPEED & ACCELERATION
-constexpr float HOMING_SPEED = 0.3;
+constexpr float HOMING_SPEED = 0.05;
 constexpr float HOMING_ACCELERATION = 0.5;
 constexpr float MAX_SPEED = 6.0f;
 constexpr float MAX_ACCELERATION = 0.3f;
@@ -43,7 +43,7 @@ constexpr int STALL_TIME_THRESHOLD = 50;               // Minimal duration for s
 
 // Closed Loop Move To
 constexpr float KP_MOVE_TO = 1.0f;
-constexpr float POSITION_TOLERANCE = 0.01f;
+constexpr float POSITION_TOLERANCE = 0.0001f;
 
 // Serial Communication Protocol
 #define PROTOCOL_ADDRESS 0x02
