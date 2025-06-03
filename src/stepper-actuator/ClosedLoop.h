@@ -15,6 +15,7 @@ namespace ControlLoop
         NOTHING,
         IDLE,
         HOME,
+        POSITION,
         TRAJECTORY
     };
 
@@ -22,6 +23,7 @@ namespace ControlLoop
     {
         IDLE,
         HOMING,
+        POSITION,
         TRAJECTORY
     };
 

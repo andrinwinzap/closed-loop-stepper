@@ -47,6 +47,16 @@ namespace ControlLoop
           flag = Flag::NOTHING;
           break;
 
+        case Flag::POSITION:
+          state = State::POSITION;
+          filtered_vel = encoder.getSpeed();
+          last_control_speed = 0;
+          stall_start_time = 0;
+          stepper.start();
+          DBG_PRINTLN("[CONTROL] Start position mode");
+          flag = Flag::NOTHING;
+          break;
+
         case Flag::TRAJECTORY:
           if (params->trajectory != nullptr)
           {
@@ -72,6 +82,44 @@ namespace ControlLoop
 
       switch (state)
       {
+
+      case State::POSITION:
+      {
+        float dt = (now - last_control_speed) * 0.001f; // ms to s
+
+        float current_position = encoder.getPosition();
+        float pos_error = last_control_speed - current_position;
+
+        if (fabs(pos_error) <= POSITION_TOLERANCE)
+        {
+          stepper.setSpeed(0);
+          stepper.stop();
+          flag = Flag::IDLE;
+          DBG_PRINTLN("[CONTROL][MOVETO] Target reached within tolerance.");
+          break;
+        }
+
+        float control_speed = KP * pos_error;
+
+        if (control_speed > MAX_SPEED)
+          control_speed = MAX_SPEED;
+        else if (control_speed < -MAX_SPEED)
+          control_speed = -MAX_SPEED;
+
+        float max_speed_change = MAX_ACCELERATION * dt;
+        float speed_diff = control_speed - last_control_speed;
+
+        if (speed_diff > max_speed_change)
+          control_speed = last_control_speed + max_speed_change;
+        else if (speed_diff < -max_speed_change)
+          control_speed = last_control_speed - max_speed_change;
+
+        stepper.setSpeed(control_speed);
+
+        last_control_speed = control_speed;
+        break;
+      }
+
       case State::TRAJECTORY:
       {
         unsigned long delta_time = now - trajectory_context.segment_start;
@@ -140,8 +188,8 @@ namespace ControlLoop
           stepper.setSpeed(control_speed);
           last_control_speed = control_speed;
         }
+        break;
       }
-      break;
 
       default:
         break;
