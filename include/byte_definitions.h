@@ -58,6 +58,29 @@ namespace Byte
             TOOL = 0x08
         };
     }
+
+    uint8_t mux_channel(uint8_t address)
+    {
+        switch (address)
+        {
+        case Byte::Address::ACTUATOR_1:
+            return 0;
+        case Byte::Address::ACTUATOR_2:
+            return 1;
+        case Byte::Address::ACTUATOR_3:
+            return 2;
+        case Byte::Address::ACTUATOR_4:
+            return 3;
+        case Byte::Address::ACTUATOR_5:
+            return 4;
+        case Byte::Address::ACTUATOR_6:
+            return 5;
+        case Byte::Address::TOOL:
+            return 6;
+        default:
+            return 0;
+        }
+    }
 }
 
 #endif

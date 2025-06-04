@@ -24,6 +24,7 @@ struct Pos
 
 float get_pos(uint8_t addr)
 {
+    mux.channel(Byte::mux_channel(addr));
     com.send_packet(addr, Byte::Command::POS);
     unsigned long start = millis();
     while (1)
@@ -55,6 +56,7 @@ float get_pos()
 
 float ping(uint8_t addr)
 {
+    mux.channel(Byte::mux_channel(addr));
     com.send_packet(addr, Byte::Command::PING);
     unsigned long start = millis();
     while (1)
