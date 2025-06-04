@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <CD74HC4067.h>
 #include <Serialization.h>
 #include <SerialProtocol.h>
 #include <Trajectory.h>
@@ -9,6 +10,7 @@ constexpr unsigned long TIMEOUT = 1000;
 
 HardwareSerial com_serial(2);
 SerialProtocol com(com_serial, PROTOCOL_ADDRESS);
+CD74HC4067 mux(MUX_S0, MUX_S1, MUX_S2, MUX_S3);
 
 struct Pos
 {
@@ -129,6 +131,7 @@ void setup()
 {
     Serial.begin(115200);
     com_serial.begin(115200, SERIAL_8N1, RXD2, TXD2);
+    mux.channel(0);
     DBG_PRINTLN("[SETUP] Setup complete");
 }
 
