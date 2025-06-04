@@ -27,7 +27,22 @@ struct ActuatorTrajectory
 
 struct RobotTrajectory
 {
-    // NOT IMPLEMENTED
+    ActuatorTrajectory actuator_1;
+    ActuatorTrajectory actuator_2;
+    ActuatorTrajectory actuator_3;
+    ActuatorTrajectory actuator_4;
+    ActuatorTrajectory actuator_5;
+    ActuatorTrajectory actuator_6;
+};
+
+struct RobotPosition
+{
+    float theta_1;
+    float theta_2;
+    float theta_3;
+    float theta_4;
+    float theta_5;
+    float theta_6;
 };
 
 float hermite_interpolate(const Waypoint &wp1,

@@ -12,16 +12,6 @@ HardwareSerial com_serial(2);
 SerialProtocol com(com_serial, PROTOCOL_ADDRESS);
 CD74HC4067 mux(MUX_S0, MUX_S1, MUX_S2, MUX_S3);
 
-struct Pos
-{
-    float theta_1;
-    float theta_2;
-    float theta_3;
-    float theta_4;
-    float theta_5;
-    float theta_6;
-};
-
 float get_pos(uint8_t addr)
 {
     mux.channel(Byte::mux_channel(addr));
@@ -45,7 +35,7 @@ float get_pos(uint8_t addr)
 
 float get_pos()
 {
-    Pos pos = {
+    RobotPosition pos = {
         .theta_1 = get_pos(Byte::Address::ACTUATOR_1),
         .theta_2 = get_pos(Byte::Address::ACTUATOR_2),
         .theta_3 = get_pos(Byte::Address::ACTUATOR_3),
