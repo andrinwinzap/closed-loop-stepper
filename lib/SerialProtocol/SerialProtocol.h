@@ -60,25 +60,27 @@ private:
     void enqueue_command(uint8_t cmd, const uint8_t *payload, size_t payload_len);
 };
 
+using WriteFunc = std::function<void(const uint8_t *data, size_t len)>;
+
 class SerialProtocol
 {
 public:
-    SerialProtocol(Stream &serial, uint8_t addr)
-        : serial_port(serial), address(addr), parser(addr) {}
+    SerialProtocol(uint8_t addr, WriteFunc write_func)
+        : address(addr), parser(addr), write_callback(write_func) {}
 
     size_t available();
     const Command *read();
+    void feed(uint8_t byte);
     void send_packet(uint8_t addr, uint8_t cmd, const uint8_t *payload = nullptr, uint16_t payload_len = 0);
     void send_packet(uint8_t addr, uint8_t cmd, const uint8_t payload_byte);
 
 private:
-    Stream &serial_port;
-    uint8_t address;
     SerialParser parser;
+    uint8_t address;
+    WriteFunc write_callback;
     uint8_t packet[MAX_PACKET_SIZE];
     size_t escape_packet(const uint8_t *data, size_t len, uint8_t *escaped_packet) const;
     uint8_t crc8(const uint8_t *data, size_t len);
-    void parse_serial();
 };
 
 #endif

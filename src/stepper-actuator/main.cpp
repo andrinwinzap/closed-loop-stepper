@@ -9,7 +9,9 @@
 #include <actuator_configuration_macro.h>
 
 HardwareSerial com_serial(2);
-SerialProtocol com(com_serial, PROTOCOL_ADDRESS);
+
+void com_callback(const uint8_t *data, size_t len);
+SerialProtocol com(PROTOCOL_ADDRESS, com_callback);
 
 AS5600 encoder(GEAR_RATIO);
 Stepper stepper(STEPPER_STEP_PIN, STEPPER_DIR_PIN, STEPPER_EN_PIN, GEAR_RATIO);
@@ -28,6 +30,11 @@ ControlLoop::Params control_loop_params = {
     .target_position = &target_position};
 
 TaskHandle_t controlTaskHandle = nullptr;
+
+void com_callback(const uint8_t *data, size_t len)
+{
+    com_serial.write(data, len);
+}
 
 void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 {
@@ -206,6 +213,10 @@ void setup()
 
 void loop()
 {
+    while (com_serial.available())
+    {
+        com.feed(Serial.read());
+    }
     if (com.available() > 0)
     {
         const Command *cmd = com.read();
