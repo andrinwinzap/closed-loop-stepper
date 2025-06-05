@@ -59,7 +59,7 @@ namespace Byte
         };
     }
 
-    uint8_t mux_channel(uint8_t address)
+    inline uint8_t mux_channel(uint8_t address)
     {
         switch (address)
         {
