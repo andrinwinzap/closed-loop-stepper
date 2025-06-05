@@ -215,7 +215,7 @@ void loop()
 {
     while (com_serial.available())
     {
-        com.feed(Serial.read());
+        com.feed(com_serial.read());
     }
     if (com.available() > 0)
     {
