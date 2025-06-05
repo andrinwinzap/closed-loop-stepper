@@ -9,15 +9,15 @@ constexpr int STEPPER_STEPS_PER_REVOLUTION = 200;
 
 // Hall Effect Sensor
 constexpr int HALL_EFFECT_SENSOR_PIN = 15;
-constexpr float HALL_EFFECT_SENSOR_ALPHA = 0.9;
+constexpr float HALL_EFFECT_SENSOR_ALPHA = 0.6;
 constexpr int HALL_EFFECT_SENSOR_HIGH_THRESHOLD = 4000;
-constexpr int HALL_EFFECT_SENSOR_LOW_THRESHOLD = 1;
+constexpr int HALL_EFFECT_SENSOR_LOW_THRESHOLD = 100;
 
 // Homing
 constexpr int BEEP_DURATION = 300;                        // ms
 constexpr int INITIAL_HOME_POSITION_DETECTION_DELAY = 50; // ms
-constexpr int HOMING_SEQUENCE_DELAY = 1000;               // ms
-constexpr float HOMING_SEQUENCE_OFFSET = 0.2;             // rad
+constexpr int HOMING_SEQUENCE_DELAY = 500;                // ms
+constexpr float HOMING_SEQUENCE_OFFSET = 0.2;             // rad500
 
 // Gearbox
 constexpr float GEAR_RATIO = 15.0;
