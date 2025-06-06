@@ -59,6 +59,9 @@ bool ping(uint8_t addr)
             }
         }
     }
+    DBG_PRINT("[CMD] Ping on address: ");
+    DBG_PRINT(addr);
+    DBG_PRINTLN(" timed out.");
     return false;
 }
 
@@ -83,6 +86,9 @@ bool pos(uint8_t addr, float &position)
             }
         }
     }
+    DBG_PRINT("[CMD] Pos on address: ");
+    DBG_PRINT(addr);
+    DBG_PRINTLN(" timed out.");
     return false;
 }
 
@@ -104,6 +110,9 @@ bool estop(uint8_t addr)
             }
         }
     }
+    DBG_PRINT("[CMD] Estop on address: ");
+    DBG_PRINT(addr);
+    DBG_PRINTLN(" timed out.");
     return false;
 }
 
@@ -128,6 +137,9 @@ bool load_traj(uint8_t addr, ActuatorTrajectory *trajectory)
             }
         }
     }
+    DBG_PRINT("[CMD] Load trajectory on address: ");
+    DBG_PRINT(addr);
+    DBG_PRINTLN(" timed out.");
     return false;
 }
 
@@ -149,6 +161,9 @@ bool exec_traj(uint8_t addr)
             }
         }
     }
+    DBG_PRINT("[CMD] Exec trajectory on address: ");
+    DBG_PRINT(addr);
+    DBG_PRINTLN(" timed out.");
     return false;
 }
 
