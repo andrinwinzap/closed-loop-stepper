@@ -62,7 +62,7 @@ bool ping(uint8_t addr)
     return false;
 }
 
-float pos(uint8_t addr)
+bool pos(uint8_t addr, float &position)
 {
     mux.channel(Byte::mux_channel(addr));
     actuator_com.send_packet(addr, Byte::Command::POS);
@@ -76,11 +76,14 @@ float pos(uint8_t addr)
             if (cmd)
             {
                 if (cmd->cmd == Byte::Command::POS)
-                    return readFloatLE(cmd->payload);
+                {
+                    position = readFloatLE(cmd->payload);
+                    return true;
+                }
             }
         }
     }
-    return 0.0f;
+    return false;
 }
 
 bool estop(uint8_t addr)
@@ -188,10 +191,19 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
     case Byte::Command::POS:
     {
         DBG_PRINTLN("[CMD] POS");
-        float result = pos(Byte::Address::ACTUATOR_1);
-        uint8_t payload[4];
-        writeFloatLE(payload, result);
-        client_com.send_packet(Byte::Address::MASTER, Byte::Command::POS, payload, 4);
+        float position;
+        bool result = pos(Byte::Address::ACTUATOR_1, position);
+        uint8_t response;
+        if (result)
+        {
+            uint8_t payload[4];
+            writeFloatLE(payload, result);
+            client_com.send_packet(Byte::Address::MASTER, Byte::Command::POS, payload, 4);
+        }
+        else
+        {
+            client_com.send_packet(Byte::Address::MASTER, Byte::Command::NACK);
+        }
         break;
     }
     case Byte::Command::LOAD_TRAJ:
