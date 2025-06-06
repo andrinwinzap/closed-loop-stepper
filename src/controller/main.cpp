@@ -9,12 +9,6 @@
 #include <credentials.h>
 
 HardwareSerial actuator_com_serial(2);
-void actuator_com_write_callback(const uint8_t *data, size_t len);
-void client_com_write_callback(const uint8_t *data, size_t len);
-
-SerialProtocol actuator_com(PROTOCOL_ADDRESS, actuator_com_write_callback);
-SerialProtocol client_com(PROTOCOL_ADDRESS, client_com_write_callback);
-
 CD74HC4067 mux(MUX_S0, MUX_S1, MUX_S2, MUX_S3);
 
 WiFiServer tcp_server(TCP_LISTEN_PORT);
@@ -32,6 +26,9 @@ void client_com_write_callback(const uint8_t *data, size_t len)
         tcp_client.write(data, len);
     }
 }
+
+SerialProtocol actuator_com(PROTOCOL_ADDRESS, actuator_com_write_callback);
+SerialProtocol client_com(PROTOCOL_ADDRESS, client_com_write_callback);
 
 float get_pos(uint8_t addr)
 {
