@@ -22,17 +22,33 @@ struct ActuatorTrajectory
     ActuatorTrajectory(const Waypoint *wps, size_t count);
     ActuatorTrajectory(const uint8_t *data, size_t len);
 
-    size_t serialize(uint8_t *outBuffer, size_t maxLen);
+    size_t serialize(uint8_t *outBuffer, size_t maxLen) const;
 };
 
-struct RobotTrajectory
+class RobotTrajectory
 {
+public:
     ActuatorTrajectory actuator_1;
     ActuatorTrajectory actuator_2;
     ActuatorTrajectory actuator_3;
     ActuatorTrajectory actuator_4;
     ActuatorTrajectory actuator_5;
     ActuatorTrajectory actuator_6;
+
+    RobotTrajectory() = default;
+
+    // Constructor from serialized data
+    RobotTrajectory(const uint8_t *data, size_t len);
+
+    // Constructor from six actuator trajectories
+    RobotTrajectory(const ActuatorTrajectory &a1,
+                    const ActuatorTrajectory &a2,
+                    const ActuatorTrajectory &a3,
+                    const ActuatorTrajectory &a4,
+                    const ActuatorTrajectory &a5,
+                    const ActuatorTrajectory &a6);
+
+    size_t serialize(uint8_t *outBuffer, size_t maxLen) const;
 };
 
 struct RobotPosition

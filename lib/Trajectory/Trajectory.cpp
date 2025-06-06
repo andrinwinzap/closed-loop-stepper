@@ -89,7 +89,7 @@ ActuatorTrajectory::ActuatorTrajectory(const uint8_t *data, size_t len)
     length = count;
 }
 
-size_t ActuatorTrajectory::serialize(uint8_t *outBuffer, size_t maxLen)
+size_t ActuatorTrajectory::serialize(uint8_t *outBuffer, size_t maxLen) const
 {
     size_t totalBytes = 1 + length * 12;
     if (maxLen < totalBytes)
@@ -109,4 +109,95 @@ size_t ActuatorTrajectory::serialize(uint8_t *outBuffer, size_t maxLen)
     }
 
     return totalBytes;
+}
+
+RobotTrajectory::RobotTrajectory(const uint8_t *data, size_t len)
+{
+    size_t index = 0;
+
+    actuator_1 = ActuatorTrajectory(&data[index], len - index);
+    size_t bytes = 1 + actuator_1.length * 12;
+    if (bytes > len - index)
+        return;
+    index += bytes;
+
+    actuator_2 = ActuatorTrajectory(&data[index], len - index);
+    bytes = 1 + actuator_2.length * 12;
+    if (bytes > len - index)
+        return;
+    index += bytes;
+
+    actuator_3 = ActuatorTrajectory(&data[index], len - index);
+    bytes = 1 + actuator_3.length * 12;
+    if (bytes > len - index)
+        return;
+    index += bytes;
+
+    actuator_4 = ActuatorTrajectory(&data[index], len - index);
+    bytes = 1 + actuator_4.length * 12;
+    if (bytes > len - index)
+        return;
+    index += bytes;
+
+    actuator_5 = ActuatorTrajectory(&data[index], len - index);
+    bytes = 1 + actuator_5.length * 12;
+    if (bytes > len - index)
+        return;
+    index += bytes;
+
+    actuator_6 = ActuatorTrajectory(&data[index], len - index);
+    // Final check is not strictly necessary unless you want to validate, since it's the last one
+}
+
+size_t RobotTrajectory::serialize(uint8_t *outBuffer, size_t maxLen) const
+{
+    size_t index = 0;
+
+    size_t bytes;
+    bytes = actuator_1.serialize(&outBuffer[index], maxLen - index);
+    if (bytes == 0)
+        return 0;
+    index += bytes;
+
+    bytes = actuator_2.serialize(&outBuffer[index], maxLen - index);
+    if (bytes == 0)
+        return 0;
+    index += bytes;
+
+    bytes = actuator_3.serialize(&outBuffer[index], maxLen - index);
+    if (bytes == 0)
+        return 0;
+    index += bytes;
+
+    bytes = actuator_4.serialize(&outBuffer[index], maxLen - index);
+    if (bytes == 0)
+        return 0;
+    index += bytes;
+
+    bytes = actuator_5.serialize(&outBuffer[index], maxLen - index);
+    if (bytes == 0)
+        return 0;
+    index += bytes;
+
+    bytes = actuator_6.serialize(&outBuffer[index], maxLen - index);
+    if (bytes == 0)
+        return 0;
+    index += bytes;
+
+    return index;
+}
+
+RobotTrajectory::RobotTrajectory(const ActuatorTrajectory &a1,
+                                 const ActuatorTrajectory &a2,
+                                 const ActuatorTrajectory &a3,
+                                 const ActuatorTrajectory &a4,
+                                 const ActuatorTrajectory &a5,
+                                 const ActuatorTrajectory &a6)
+    : actuator_1(a1),
+      actuator_2(a2),
+      actuator_3(a3),
+      actuator_4(a4),
+      actuator_5(a5),
+      actuator_6(a6)
+{
 }
