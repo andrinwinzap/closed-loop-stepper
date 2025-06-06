@@ -8,7 +8,7 @@
 #include <controller.h>
 #include <credentials.h>
 
-HardwareSerial com_serial(2);
+HardwareSerial actuator_com_serial(2);
 void actuator_com_write_callback(const uint8_t *data, size_t len);
 void client_com_write_callback(const uint8_t *data, size_t len);
 
@@ -17,19 +17,19 @@ SerialProtocol client_com(PROTOCOL_ADDRESS, client_com_write_callback);
 
 CD74HC4067 mux(MUX_S0, MUX_S1, MUX_S2, MUX_S3);
 
-WiFiServer tcpServer(TCP_LISTEN_PORT);
-WiFiClient tcpClient;
+WiFiServer tcp_server(TCP_LISTEN_PORT);
+WiFiClient tcp_client;
 
 void actuator_com_write_callback(const uint8_t *data, size_t len)
 {
-    com_serial.write(data, len);
+    actuator_com_serial.write(data, len);
 }
 
 void client_com_write_callback(const uint8_t *data, size_t len)
 {
-    if (tcpClient && tcpClient.connected())
+    if (tcp_client && tcp_client.connected())
     {
-        tcpClient.write(data, len);
+        tcp_client.write(data, len);
     }
 }
 
@@ -97,10 +97,9 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         client_com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
         break;
     }
-    case Byte::Command::HOME:
+    case Byte::Command::ESTOP:
     {
-        DBG_PRINTLN("[CMD] HOME");
-        // NOT IMPLEMENTED
+        DBG_PRINTLN("[CMD] ESTOP");
         client_com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
         break;
     }
@@ -144,39 +143,53 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 void setup()
 {
     Serial.begin(115200);
-    com_serial.begin(115200, SERIAL_8N1, RXD2, TXD2);
+    actuator_com_serial.begin(115200, SERIAL_8N1, RXD2, TXD2);
 
     pinMode(MUX_SIG, OUTPUT);
     mux.channel(0);
 
-    DBG_PRINTLN("[SETUP] Connecting to Wi-Fi...");
+    DBG_PRINT("[SETUP] Connecting to Wi-Fi...");
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASS);
 
-    unsigned long wifiStart = millis();
+    unsigned long wifi_start = millis();
+
     while (WiFi.status() != WL_CONNECTED)
     {
-        if (millis() - wifiStart > WIFI_CONNECT_TIMEOUT)
+        if (millis() - wifi_start > WIFI_CONNECT_TIMEOUT)
         {
-            DBG_PRINTLN("[ERROR] Wi-Fi connection failed!");
+            DBG_PRINTLN("\n[ERROR] Wi-Fi connection failed.");
             break;
         }
         delay(200);
         DBG_PRINT(".");
     }
+
     if (WiFi.status() == WL_CONNECTED)
     {
         DBG_PRINTLN("\n[SETUP] Wi-Fi connected.");
-        DBG_PRINT("        IP = ");
+        DBG_PRINT("[SETUP] IP = ");
         DBG_PRINTLN(WiFi.localIP());
     }
     else
     {
-        DBG_PRINTLN("\n[SETUP] Continuing without Wi-Fi...");
+        DBG_PRINTLN("[SETUP] Starting AP mode...");
+        WiFi.mode(WIFI_AP);
+
+        if (WiFi.softAP(AP_SSID, AP_PASS))
+        {
+            IPAddress IP = WiFi.softAPIP();
+            DBG_PRINT("[SETUP] AP IP address: ");
+            DBG_PRINTLN(IP);
+        }
+        else
+        {
+            DBG_PRINTLN("[ERROR] Failed to start AP mode.");
+        }
     }
 
-    tcpServer.begin();
-    tcpServer.setNoDelay(true);
+    tcp_server.begin();
+    tcp_server.setNoDelay(true);
     DBG_PRINT("[SETUP] TCP Server started on port ");
     DBG_PRINTLN(TCP_LISTEN_PORT);
 
@@ -185,22 +198,22 @@ void setup()
 
 void loop()
 {
-    if (!tcpClient || !tcpClient.connected())
+    if (!tcp_client || !tcp_client.connected())
     {
-        WiFiClient newClient = tcpServer.available();
+        WiFiClient newClient = tcp_server.available();
         if (newClient)
         {
-            if (tcpClient && tcpClient.connected())
+            if (tcp_client && tcp_client.connected())
             {
-                tcpClient.stop();
+                tcp_client.stop();
                 DBG_PRINTLN("[LOOP] Dropped previous client.");
             }
-            tcpClient = newClient;
-            tcpClient.setNoDelay(true);
+            tcp_client = newClient;
+            tcp_client.setNoDelay(true);
             DBG_PRINT("[LOOP] Client connected from ");
-            DBG_PRINT(tcpClient.remoteIP());
+            DBG_PRINT(tcp_client.remoteIP());
             DBG_PRINT(":");
-            DBG_PRINTLN(tcpClient.remotePort());
+            DBG_PRINTLN(tcp_client.remotePort());
         }
         else
         {
@@ -209,9 +222,9 @@ void loop()
         }
     }
 
-    while (tcpClient && tcpClient.connected() && tcpClient.available())
+    while (tcp_client && tcp_client.connected() && tcp_client.available())
     {
-        uint8_t byteReceived = tcpClient.read();
+        uint8_t byteReceived = tcp_client.read();
         client_com.feed(byteReceived);
     }
 
@@ -224,9 +237,9 @@ void loop()
         }
     }
 
-    while (com_serial.available())
+    while (actuator_com_serial.available())
     {
-        uint8_t c = com_serial.read();
+        uint8_t c = actuator_com_serial.read();
         actuator_com.feed(c);
     }
 }
