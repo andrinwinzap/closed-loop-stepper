@@ -201,3 +201,39 @@ RobotTrajectory::RobotTrajectory(const ActuatorTrajectory &a1,
       actuator_6(a6)
 {
 }
+
+RobotPosition::RobotPosition(const uint8_t *data, size_t len)
+{
+    if (len < 24) // 6 floats * 4 bytes
+    {
+        theta_1 = theta_2 = theta_3 = theta_4 = theta_5 = theta_6 = 0.0f;
+        return;
+    }
+
+    theta_1 = readFloatLE(&data[0]);
+    theta_2 = readFloatLE(&data[4]);
+    theta_3 = readFloatLE(&data[8]);
+    theta_4 = readFloatLE(&data[12]);
+    theta_5 = readFloatLE(&data[16]);
+    theta_6 = readFloatLE(&data[20]);
+}
+
+size_t RobotPosition::serialize(uint8_t *outBuffer, size_t maxLen) const
+{
+    if (maxLen < 24)
+        return 0;
+
+    writeFloatLE(&outBuffer[0], theta_1);
+    writeFloatLE(&outBuffer[4], theta_2);
+    writeFloatLE(&outBuffer[8], theta_3);
+    writeFloatLE(&outBuffer[12], theta_4);
+    writeFloatLE(&outBuffer[16], theta_5);
+    writeFloatLE(&outBuffer[20], theta_6);
+
+    return 24;
+}
+
+RobotPosition::RobotPosition(float t1, float t2, float t3, float t4, float t5, float t6)
+    : theta_1(t1), theta_2(t2), theta_3(t3), theta_4(t4), theta_5(t5), theta_6(t6)
+{
+}

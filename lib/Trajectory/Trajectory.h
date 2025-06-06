@@ -25,9 +25,8 @@ struct ActuatorTrajectory
     size_t serialize(uint8_t *outBuffer, size_t maxLen) const;
 };
 
-class RobotTrajectory
+struct RobotTrajectory
 {
-public:
     ActuatorTrajectory actuator_1;
     ActuatorTrajectory actuator_2;
     ActuatorTrajectory actuator_3;
@@ -59,6 +58,11 @@ struct RobotPosition
     float theta_4;
     float theta_5;
     float theta_6;
+
+    RobotPosition() = default;
+    RobotPosition(float t1, float t2, float t3, float t4, float t5, float t6);
+    RobotPosition(const uint8_t *data, size_t len);
+    size_t serialize(uint8_t *outBuffer, size_t maxLen) const;
 };
 
 float hermite_interpolate(const Waypoint &wp1,
