@@ -62,8 +62,11 @@ void SerialProtocol::send_packet(uint8_t addr, uint8_t cmd, const uint8_t *paylo
 
     uint8_t escaped_packet[MAX_ESCAPED_PACKET_SIZE];
     size_t escaped_packet_len = escape_packet(packet, index, escaped_packet);
-    write_callback((const uint8_t[]){Byte::Protocol::START}, 1);
-    write_callback(escaped_packet, escaped_packet_len);
+    if (write_callback)
+    {
+        write_callback((const uint8_t[]){Byte::Protocol::START}, 1);
+        write_callback(escaped_packet, escaped_packet_len);
+    }
 }
 
 void SerialProtocol::send_packet(uint8_t addr, uint8_t cmd, const uint8_t payload_byte)

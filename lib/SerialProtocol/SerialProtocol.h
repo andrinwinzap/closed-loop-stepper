@@ -6,6 +6,8 @@
 #include <debug_macro.h>
 #include <byte_definitions.h>
 
+using WriteCallback = void (*)(const uint8_t *, size_t);
+
 constexpr size_t MAX_PAYLOAD_SIZE = 1024;
 constexpr size_t MAX_PACKET_SIZE = MAX_PAYLOAD_SIZE + 5;        // Max unescaped packet size = addr(1) + cmd (1) + len (2) + payload + checksum (1)
 constexpr size_t MAX_ESCAPED_PACKET_SIZE = MAX_PACKET_SIZE * 2; // worst case
@@ -60,13 +62,11 @@ private:
     void enqueue_command(uint8_t cmd, const uint8_t *payload, size_t payload_len);
 };
 
-using WriteFunc = std::function<void(const uint8_t *data, size_t len)>;
-
 class SerialProtocol
 {
 public:
-    SerialProtocol(uint8_t addr, WriteFunc write_func)
-        : address(addr), parser(addr), write_callback(write_func) {}
+    SerialProtocol(uint8_t addr, WriteCallback write_callback = nullptr)
+        : address(addr), parser(addr), write_callback(write_callback) {}
 
     size_t available();
     const Command *read();
@@ -77,7 +77,7 @@ public:
 private:
     SerialParser parser;
     uint8_t address;
-    WriteFunc write_callback;
+    WriteCallback write_callback;
     uint8_t packet[MAX_PACKET_SIZE];
     size_t escape_packet(const uint8_t *data, size_t len, uint8_t *escaped_packet) const;
     uint8_t crc8(const uint8_t *data, size_t len);
