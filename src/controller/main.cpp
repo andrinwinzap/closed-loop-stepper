@@ -56,6 +56,8 @@ bool ping(uint8_t addr)
             {
                 if (cmd->cmd == Byte::Command::ACK)
                     return true;
+                else if (cmd->cmd == Byte::Command::NACK)
+                    return false;
             }
         }
     }
@@ -83,6 +85,8 @@ bool pos(uint8_t addr, float &position)
                     position = readFloatLE(cmd->payload);
                     return true;
                 }
+                else if (cmd->cmd == Byte::Command::NACK)
+                    return false;
             }
         }
     }
@@ -107,6 +111,8 @@ bool estop(uint8_t addr)
             {
                 if (cmd->cmd == Byte::Command::ACK)
                     return true;
+                else if (cmd->cmd == Byte::Command::NACK)
+                    return false;
             }
         }
     }
@@ -134,6 +140,8 @@ bool load_traj(uint8_t addr, ActuatorTrajectory *trajectory)
             {
                 if (cmd->cmd == Byte::Command::ACK)
                     return true;
+                else if (cmd->cmd == Byte::Command::NACK)
+                    return false;
             }
         }
     }
@@ -158,6 +166,8 @@ bool exec_traj(uint8_t addr)
             {
                 if (cmd->cmd == Byte::Command::ACK)
                     return true;
+                else if (cmd->cmd == Byte::Command::NACK)
+                    return false;
             }
         }
     }
