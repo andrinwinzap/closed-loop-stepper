@@ -294,7 +294,6 @@ void setup()
     Serial.begin(115200);
     actuator_com_serial.begin(115200, SERIAL_8N1, RXD2, TXD2);
 
-    pinMode(MUX_SIG, OUTPUT);
     mux.channel(0);
 
     DBG_PRINT("[SETUP] Connecting to Wi-Fi...");
