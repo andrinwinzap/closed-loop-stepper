@@ -45,6 +45,7 @@ uint8_t SerialProtocol::crc8(const uint8_t *data, size_t len)
 void SerialProtocol::send_packet(uint8_t addr, uint8_t cmd, const uint8_t *payload, uint16_t payload_len)
 {
     size_t index = 0;
+    packet[index++] = addr;
     packet[index++] = cmd;
     writeUint16LE(&packet[index], payload_len);
     index += 2;
