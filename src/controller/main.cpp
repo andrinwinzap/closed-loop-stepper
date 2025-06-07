@@ -67,6 +67,14 @@ bool ping(uint8_t addr)
     return false;
 }
 
+bool ping()
+{
+    return ping(Byte::Address::ACTUATOR_1) &&
+           ping(Byte::Address::ACTUATOR_2) &&
+           ping(Byte::Address::ACTUATOR_3) &&
+           ping(Byte::Address::ACTUATOR_4);
+}
+
 bool pos(uint8_t addr, float &position)
 {
     mux.channel(Byte::mux_channel(addr));
@@ -96,6 +104,14 @@ bool pos(uint8_t addr, float &position)
     return false;
 }
 
+bool pos(RobotPosition &robot_position)
+{
+    return pos(Byte::Address::ACTUATOR_1, robot_position.theta_1) &&
+           pos(Byte::Address::ACTUATOR_2, robot_position.theta_2) &&
+           pos(Byte::Address::ACTUATOR_3, robot_position.theta_3) &&
+           pos(Byte::Address::ACTUATOR_4, robot_position.theta_4);
+}
+
 bool estop(uint8_t addr)
 {
     mux.channel(Byte::mux_channel(addr));
@@ -120,6 +136,14 @@ bool estop(uint8_t addr)
     DBG_PRINT(addr);
     DBG_PRINTLN(" timed out.");
     return false;
+}
+
+bool estop()
+{
+    return estop(Byte::Address::ACTUATOR_1) &&
+           estop(Byte::Address::ACTUATOR_2) &&
+           estop(Byte::Address::ACTUATOR_3) &&
+           estop(Byte::Address::ACTUATOR_4);
 }
 
 bool load_traj(uint8_t addr, ActuatorTrajectory *trajectory)
@@ -151,6 +175,14 @@ bool load_traj(uint8_t addr, ActuatorTrajectory *trajectory)
     return false;
 }
 
+bool load_traj(ActuatorTrajectory *trajectory)
+{
+    return load_traj(Byte::Address::ACTUATOR_1, trajectory) &&
+           load_traj(Byte::Address::ACTUATOR_2, trajectory) &&
+           load_traj(Byte::Address::ACTUATOR_3, trajectory) &&
+           load_traj(Byte::Address::ACTUATOR_4, trajectory);
+}
+
 bool exec_traj(uint8_t addr)
 {
     mux.channel(Byte::mux_channel(addr));
@@ -177,6 +209,14 @@ bool exec_traj(uint8_t addr)
     return false;
 }
 
+bool exec_traj()
+{
+    return exec_traj(Byte::Address::ACTUATOR_1) &&
+           exec_traj(Byte::Address::ACTUATOR_2) &&
+           exec_traj(Byte::Address::ACTUATOR_3) &&
+           exec_traj(Byte::Address::ACTUATOR_4);
+}
+
 void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 {
     switch (cmd)
@@ -184,7 +224,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
     case Byte::Command::PING:
     {
         DBG_PRINTLN("[CMD] PING");
-        bool result = ping(Byte::Address::ACTUATOR_1);
+        bool result = ping();
         uint8_t response;
         if (result)
         {
@@ -200,7 +240,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
     case Byte::Command::ESTOP:
     {
         DBG_PRINTLN("[CMD] ESTOP");
-        bool result = estop(Byte::Address::ACTUATOR_1);
+        bool result = estop();
         uint8_t response;
         if (result)
         {
@@ -216,14 +256,14 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
     case Byte::Command::POS:
     {
         DBG_PRINTLN("[CMD] POS");
-        float position;
-        bool result = pos(Byte::Address::ACTUATOR_1, position);
+        RobotPosition robot_position;
+        bool result = pos(robot_position);
         uint8_t response;
         if (result)
         {
-            uint8_t payload[4];
-            writeFloatLE(payload, result);
-            client_com.send_packet(Byte::Address::MASTER, Byte::Command::POS, payload, 4);
+            uint8_t payload[24];
+            robot_position.serialize(payload, 24);
+            client_com.send_packet(Byte::Address::MASTER, Byte::Command::POS, payload, 24);
         }
         else
         {
@@ -269,7 +309,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
             }
         }
 
-        bool result = load_traj(Byte::Address::ACTUATOR_1, trajectory);
+        bool result = load_traj(trajectory);
         uint8_t response;
         if (result)
         {
@@ -285,7 +325,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
     case Byte::Command::EXEC_TRAJ:
     {
         DBG_PRINTLN("[CMD] EXEC_TRAJ");
-        bool result = exec_traj(Byte::Address::ACTUATOR_1);
+        bool result = exec_traj();
         uint8_t response;
         if (result)
         {
