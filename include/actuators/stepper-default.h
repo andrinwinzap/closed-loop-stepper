@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-constexpr bool DUMMY_MODE = true;
+constexpr bool DUMMY_MODE = false;
 
 // Stepper Motor
 constexpr int STEPPER_STEP_PIN = 17;
