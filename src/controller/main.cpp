@@ -232,7 +232,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         {
             response = Byte::Command::NACK;
         }
-        client_com.send_packet(Byte::Address::MASTER, response);
+        client_com.send_packet(Byte::Address::BROADCAST, response);
         break;
     }
     case Byte::Command::ESTOP:
@@ -248,7 +248,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         {
             response = Byte::Command::NACK;
         }
-        client_com.send_packet(Byte::Address::MASTER, response);
+        client_com.send_packet(Byte::Address::BROADCAST, response);
         break;
     }
     case Byte::Command::POS:
@@ -261,11 +261,11 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         {
             uint8_t payload[24];
             robot_position.serialize(payload, 24);
-            client_com.send_packet(Byte::Address::MASTER, Byte::Command::POS, payload, 24);
+            client_com.send_packet(Byte::Address::BROADCAST, Byte::Command::POS, payload, 24);
         }
         else
         {
-            client_com.send_packet(Byte::Address::MASTER, Byte::Command::NACK);
+            client_com.send_packet(Byte::Address::BROADCAST, Byte::Command::NACK);
         }
         break;
     }
@@ -285,7 +285,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         {
             response = Byte::Command::NACK;
         }
-        client_com.send_packet(Byte::Address::MASTER, response);
+        client_com.send_packet(Byte::Address::BROADCAST, response);
         break;
     }
     case Byte::Command::EXEC_TRAJ:
@@ -301,7 +301,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         {
             response = Byte::Command::NACK;
         }
-        client_com.send_packet(Byte::Address::MASTER, response);
+        client_com.send_packet(Byte::Address::BROADCAST, response);
         break;
     }
 
