@@ -1,7 +1,6 @@
-// Encoder
-constexpr float ENCODER_UPDATE_FREQUENCY = 10000.0f;
+#include <byte_definitions.h>
 
 // Serial Communication Protocol
-#define PROTOCOL_ADDRESS 0x07
-#define RXD2 26
-#define TXD2 27
+constexpr int PROTOCOL_ADDRESS = Byte::Address::ACTUATOR_6;
+constexpr int MASTER_COM_RX = 26;
+constexpr int MASTER_COM_TX = 27;

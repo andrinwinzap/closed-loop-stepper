@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <byte_definitions.h>
 
 constexpr bool DUMMY_MODE = true;
 
@@ -43,6 +44,6 @@ constexpr TickType_t CONTROL_LOOP_PERIOD_TICKS = configTICK_RATE_HZ / CONTROL_LO
 constexpr float CONTROL_LOOP_INTERVAL = 1000.0f / CONTROL_LOOP_FREQUENCY;
 
 // Serial Communication Protocol
-constexpr int PROTOCOL_ADDRESS = 0x03;
-constexpr int RXD2 = 26;
-constexpr int TXD2 = 27;
+constexpr int PROTOCOL_ADDRESS = Byte::Address::ACTUATOR_2;
+constexpr int MASTER_COM_RX = 26;
+constexpr int MASTER_COM_TX = 27;

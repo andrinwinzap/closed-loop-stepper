@@ -1,7 +1,9 @@
+#include <byte_definitions.h>
+
 // Serial Communication Protocol
-constexpr int PROTOCOL_ADDRESS = 0x01;
-constexpr int RXD2 = 26;
-constexpr int TXD2 = 27;
+constexpr int PROTOCOL_ADDRESS = Byte::Address::MASTER;
+constexpr int ACTUATOR_COM_RX = 26;
+constexpr int ACTUATOR_COM_TX = 27;
 constexpr unsigned long SERIAL_PROTOCOL_TIMEOUT = 1000;
 
 constexpr int MUX_S0 = 13;
