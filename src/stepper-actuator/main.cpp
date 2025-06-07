@@ -8,10 +8,10 @@
 #include <debug_macro.h>
 #include <actuator_configuration_macro.h>
 
-HardwareSerial com_serial(MASTER_COM_PORT);
+HardwareSerial master_com_serial(MASTER_COM_PORT);
 
-void com_callback(const uint8_t *data, size_t len);
-SerialProtocol com(PROTOCOL_ADDRESS, com_callback);
+void master_com_callback(const uint8_t *data, size_t len);
+SerialProtocol master_com(PROTOCOL_ADDRESS, master_com_callback);
 
 AS5600 encoder(GEAR_RATIO);
 Stepper stepper(STEPPER_STEP_PIN, STEPPER_DIR_PIN, STEPPER_EN_PIN, GEAR_RATIO);
@@ -31,9 +31,9 @@ ControlLoop::Params control_loop_params = {
 
 TaskHandle_t controlTaskHandle = nullptr;
 
-void com_callback(const uint8_t *data, size_t len)
+void master_com_callback(const uint8_t *data, size_t len)
 {
-    com_serial.write(data, len);
+    master_com_serial.write(data, len);
 }
 
 void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
@@ -43,7 +43,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
     case Byte::Command::PING:
     {
         DBG_PRINTLN("[CMD] PING");
-        com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
+        master_com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
         break;
     }
 
@@ -52,14 +52,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         DBG_PRINTLN("[CMD] ESTOP");
         if (!DUMMY_MODE)
             control_loop_flag = ControlLoop::Flag::ESTOP;
-        com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
-        break;
-    }
-
-    case Byte::Command::HOME:
-    {
-        DBG_PRINTLN("[CMD] HOME");
-        com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
+        master_com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
         break;
     }
 
@@ -75,7 +68,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         DBG_PRINTLN(pos);
         uint8_t payload[4];
         writeFloatLE(payload, pos);
-        com.send_packet(Byte::Address::MASTER, Byte::Command::POS, payload, 4);
+        master_com.send_packet(Byte::Address::MASTER, Byte::Command::POS, payload, 4);
         break;
     }
     case Byte::Command::LOAD_TRAJ:
@@ -115,7 +108,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
             }
         }
 
-        com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
+        master_com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
         break;
     }
     case Byte::Command::EXEC_TRAJ:
@@ -131,7 +124,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         if (!DUMMY_MODE)
             control_loop_flag = ControlLoop::Flag::TRAJECTORY;
         DBG_PRINTLN("[CMD] Trajectory execution triggered");
-        com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
+        master_com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
         break;
     }
     case Byte::Command::STATUS:
@@ -141,17 +134,17 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         {
         case ControlLoop::State::IDLE:
         {
-            com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::IDLE);
+            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::IDLE);
             break;
         }
         case ControlLoop::State::HOMING:
         {
-            com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::HOMING);
+            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::HOMING);
             break;
         }
         case ControlLoop::State::TRAJECTORY:
         {
-            com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::EXECUTING_TRAJECTORY);
+            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::EXECUTING_TRAJECTORY);
             break;
         }
         default:
@@ -179,7 +172,7 @@ void setup()
 #ifdef DEBUG_OUTPUT
     Serial.begin(DEBUG_SERIAL_BAUD);
 #endif
-    com_serial.begin(MASTER_COM_BAUD, SERIAL_8N1, MASTER_COM_RX, MASTER_COM_TX);
+    master_com_serial.begin(MASTER_COM_BAUD, SERIAL_8N1, MASTER_COM_RX, MASTER_COM_TX);
 
     DBG_PRINTLN("[SETUP] Starting setup");
 
@@ -222,16 +215,16 @@ void setup()
 
 void loop()
 {
-    while (com_serial.available())
+    while (master_com_serial.available())
     {
-        com.feed(com_serial.read());
+        master_com.feed(master_com_serial.read());
     }
-    if (com.available() > 0)
+    if (master_com.available() > 0)
     {
-        const Command *cmd = com.read();
-        if (cmd)
+        const Command *packet = master_com.read();
+        if (packet)
         {
-            parse_cmd(cmd->cmd, cmd->payload, cmd->payload_len);
+            parse_cmd(packet->cmd, packet->payload, packet->payload_len);
         }
     }
 }
