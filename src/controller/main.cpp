@@ -8,7 +8,7 @@
 #include <controller.h>
 #include <credentials.h>
 
-HardwareSerial actuator_com_serial(2);
+HardwareSerial actuator_com_serial(ACTUATOR_COM_PORT);
 CD74HC4067 mux(MUX_S0, MUX_S1, MUX_S2, MUX_S3);
 
 WiFiServer tcp_server(TCP_LISTEN_PORT);

@@ -8,7 +8,7 @@
 #include <debug_macro.h>
 #include <actuator_configuration_macro.h>
 
-HardwareSerial com_serial(2);
+HardwareSerial com_serial(MASTER_COM_PORT);
 
 void com_callback(const uint8_t *data, size_t len);
 SerialProtocol com(PROTOCOL_ADDRESS, com_callback);
