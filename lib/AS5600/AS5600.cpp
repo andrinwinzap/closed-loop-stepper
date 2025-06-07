@@ -6,6 +6,14 @@ AS5600::AS5600(float gear_ratio, TwoWire &wirePort, uint8_t address)
 bool AS5600::begin()
 {
     _wire->begin();
+
+    uint8_t status = read8(0x0B);
+
+    if (status == 0xFF || !_wire->available())
+    {
+        return false;
+    }
+
     _lastUpdate = millis();
     _lastRawAngle = getRawAngle();
     return true;
@@ -15,13 +23,13 @@ uint8_t AS5600::read8(uint8_t reg)
 {
     _wire->beginTransmission(_address);
     _wire->write(reg);
-    _wire->endTransmission(false);
-    _wire->requestFrom(_address, (uint8_t)1);
-    if (_wire->available())
-    {
-        return _wire->read();
-    }
-    return 0;
+    if (_wire->endTransmission(false) != 0)
+        return 0xFF;
+
+    if (_wire->requestFrom(_address, (uint8_t)1) != 1)
+        return 0xFF;
+
+    return _wire->read();
 }
 
 uint16_t AS5600::read12bit(uint8_t regHigh)
