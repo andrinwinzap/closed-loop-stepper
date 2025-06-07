@@ -2,6 +2,8 @@
 #include "stepper-default.h"
 #include <byte_definitions.h>
 
+constexpr bool DUMMY_MODE = true;
+
 // Gearbox
 constexpr float GEAR_RATIO = 13.0;
 
