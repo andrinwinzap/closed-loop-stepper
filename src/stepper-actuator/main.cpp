@@ -50,7 +50,8 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
     case Byte::Command::ESTOP:
     {
         DBG_PRINTLN("[CMD] ESTOP");
-        control_loop_flag = ControlLoop::Flag::ESTOP;
+        if (!DUMMY_MODE)
+            control_loop_flag = ControlLoop::Flag::ESTOP;
         com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
         break;
     }
@@ -65,7 +66,11 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
     case Byte::Command::POS:
     {
         DBG_PRINTLN("[CMD] POS");
-        float pos = encoder.getPosition();
+        float pos;
+        if (DUMMY_MODE)
+            pos = 123.456f;
+        else
+            float pos = encoder.getPosition();
         DBG_PRINT("[CMD] Encoder position: ");
         DBG_PRINTLN(pos);
         uint8_t payload[4];
@@ -123,7 +128,8 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
             break;
         }
 
-        control_loop_flag = ControlLoop::Flag::TRAJECTORY;
+        if (!DUMMY_MODE)
+            control_loop_flag = ControlLoop::Flag::TRAJECTORY;
         DBG_PRINTLN("[CMD] Trajectory execution triggered");
         com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
         break;
@@ -175,39 +181,40 @@ void setup()
 
     DBG_PRINTLN("[SETUP] Starting setup");
 
-    Wire.begin();
-
-    if (!encoder.begin())
+    if (!DUMMY_MODE)
     {
-        DBG_PRINTLN("[SETUP] AS5600 not found!");
-        while (1)
-            ;
+        Wire.begin();
+
+        if (!encoder.begin())
+        {
+            DBG_PRINTLN("[SETUP] AS5600 not found!");
+            while (1)
+                ;
+        }
+
+        DBG_PRINTLN("[SETUP] AS5600 ready");
+
+        stepper.begin();
+        stepper.disable();
+        stepper.setMicrosteps(STEPPER_MICROSTEPS);
+        stepper.setStepsPerRevolution(STEPPER_STEPS_PER_REVOLUTION);
+        stepper.setMaxSpeed(1000000);
+
+        DBG_PRINTLN("[SETUP] Stepper initialized");
+
+        pinMode(HALL_EFFECT_SENSOR_PIN, INPUT_PULLUP);
+
+        xTaskCreatePinnedToCore(
+            ControlLoop::task,
+            "ControlLoopTask",
+            4096,
+            &control_loop_params,
+            1,
+            &controlTaskHandle,
+            0 // Core 0
+        );
     }
-
-    DBG_PRINTLN("[SETUP] AS5600 ready");
-
-    stepper.begin();
-    stepper.disable();
-    stepper.setMicrosteps(STEPPER_MICROSTEPS);
-    stepper.setStepsPerRevolution(STEPPER_STEPS_PER_REVOLUTION);
-    stepper.setMaxSpeed(1000000);
-
-    DBG_PRINTLN("[SETUP] Stepper initialized");
-
-    pinMode(HALL_EFFECT_SENSOR_PIN, INPUT_PULLUP);
-
     control_loop_flag = ControlLoop::Flag::IDLE;
-
-    xTaskCreatePinnedToCore(
-        ControlLoop::task,
-        "ControlLoopTask",
-        4096,
-        &control_loop_params,
-        1,
-        &controlTaskHandle,
-        0 // Core 0
-    );
-
     DBG_PRINTLN("[SETUP] Setup complete");
 }
 

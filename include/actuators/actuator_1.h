@@ -1,5 +1,7 @@
 #include <Arduino.h>
 
+constexpr bool DUMMY_MODE = true;
+
 // Stepper Motor
 constexpr int STEPPER_STEP_PIN = 17;
 constexpr int STEPPER_DIR_PIN = 16;
