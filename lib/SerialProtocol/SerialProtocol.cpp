@@ -127,7 +127,7 @@ void SerialParser::parse(uint8_t byte)
     {
     case ParserState::READ_ADDR:
         update_crc8(byte);
-        if (byte == address)
+        if (byte == address || byte == Byte::Address::BROADCAST)
         {
             state = ParserState::READ_CMD;
         }
