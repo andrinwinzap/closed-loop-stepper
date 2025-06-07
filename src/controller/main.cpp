@@ -405,8 +405,7 @@ void loop()
 
     while (tcp_client && tcp_client.connected() && tcp_client.available())
     {
-        uint8_t byteReceived = tcp_client.read();
-        client_com.feed(byteReceived);
+        client_com.feed(tcp_client.read());
     }
 
     if (client_com.available() > 0)
