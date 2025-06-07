@@ -9,7 +9,7 @@ bool AS5600::begin()
 
     uint8_t status = read8(0x0B);
 
-    if (status == 0xFF || !_wire->available())
+    if (status == 0xFF)
     {
         return false;
     }
@@ -36,12 +36,12 @@ uint16_t AS5600::read12bit(uint8_t regHigh)
 {
     _wire->beginTransmission(_address);
     _wire->write(regHigh);
-    _wire->endTransmission(false);
-    _wire->requestFrom(_address, (uint8_t)2);
-    if (_wire->available() < 2)
-    {
+    if (_wire->endTransmission(false) != 0)
         return 0;
-    }
+
+    if (_wire->requestFrom(_address, (uint8_t)2) != 2)
+        return 0;
+
     uint8_t high = _wire->read();
     uint8_t low = _wire->read();
     return ((high << 8) | low) & 0x0FFF;
