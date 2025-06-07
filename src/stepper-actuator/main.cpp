@@ -63,7 +63,7 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         if (DUMMY_MODE)
             pos = 123.456f;
         else
-            float pos = encoder.getPosition();
+            pos = encoder.getPosition();
         DBG_PRINT("[CMD] Encoder position: ");
         DBG_PRINTLN(pos);
         uint8_t payload[4];
