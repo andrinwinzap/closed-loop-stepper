@@ -176,8 +176,10 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 
 void setup()
 {
-    Serial.begin(115200);
-    com_serial.begin(115200, SERIAL_8N1, MASTER_COM_RX, MASTER_COM_TX);
+#ifdef DEBUG_OUTPUT
+    Serial.begin(DEBUG_SERIAL_BAUD);
+#endif
+    com_serial.begin(MASTER_COM_BAUD, SERIAL_8N1, MASTER_COM_RX, MASTER_COM_TX);
 
     DBG_PRINTLN("[SETUP] Starting setup");
 

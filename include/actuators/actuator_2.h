@@ -45,5 +45,6 @@ constexpr float CONTROL_LOOP_INTERVAL = 1000.0f / CONTROL_LOOP_FREQUENCY;
 
 // Serial Communication Protocol
 constexpr int PROTOCOL_ADDRESS = Byte::Address::ACTUATOR_2;
+constexpr int MASTER_COM_BAUD = 115200;
 constexpr int MASTER_COM_RX = 26;
 constexpr int MASTER_COM_TX = 27;
