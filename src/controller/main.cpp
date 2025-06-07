@@ -30,8 +30,6 @@ void client_com_write_callback(const uint8_t *data, size_t len)
 SerialProtocol actuator_com(PROTOCOL_ADDRESS, actuator_com_write_callback);
 SerialProtocol client_com(PROTOCOL_ADDRESS, client_com_write_callback);
 
-ActuatorTrajectory *trajectory = nullptr;
-
 void read_actuator_com_serial()
 {
     while (actuator_com_serial.available())
@@ -146,12 +144,12 @@ bool estop()
            estop(Byte::Address::ACTUATOR_4);
 }
 
-bool load_traj(uint8_t addr, ActuatorTrajectory *trajectory)
+bool load_traj(uint8_t addr, ActuatorTrajectory &trajectory)
 {
     mux.channel(Byte::mux_channel(addr));
-    uint16_t payload_len = 1 + trajectory->length * 12;
+    uint16_t payload_len = 1 + trajectory.length * 12;
     uint8_t payload[payload_len];
-    trajectory->serialize(payload, payload_len);
+    trajectory.serialize(payload, payload_len);
     actuator_com.send_packet(addr, Byte::Command::LOAD_TRAJ, payload, payload_len);
     unsigned long start = millis();
     while (millis() - start < SERIAL_PROTOCOL_TIMEOUT)
@@ -175,12 +173,12 @@ bool load_traj(uint8_t addr, ActuatorTrajectory *trajectory)
     return false;
 }
 
-bool load_traj(ActuatorTrajectory *trajectory)
+bool load_traj(RobotTrajectory &trajectory)
 {
-    return load_traj(Byte::Address::ACTUATOR_1, trajectory) &&
-           load_traj(Byte::Address::ACTUATOR_2, trajectory) &&
-           load_traj(Byte::Address::ACTUATOR_3, trajectory) &&
-           load_traj(Byte::Address::ACTUATOR_4, trajectory);
+    return load_traj(Byte::Address::ACTUATOR_1, trajectory.actuator_1) &&
+           load_traj(Byte::Address::ACTUATOR_2, trajectory.actuator_2) &&
+           load_traj(Byte::Address::ACTUATOR_3, trajectory.actuator_3) &&
+           load_traj(Byte::Address::ACTUATOR_4, trajectory.actuator_4);
 }
 
 bool exec_traj(uint8_t addr)
@@ -274,40 +272,8 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
     case Byte::Command::LOAD_TRAJ:
     {
         DBG_PRINTLN("[CMD] LOAD_TRAJ");
-        if (trajectory != nullptr)
-        {
-            DBG_PRINTLN("[CMD] Deleting existing trajectory");
-            delete trajectory;
-            trajectory = nullptr;
-        }
 
-        trajectory = new ActuatorTrajectory(payload, payload_len);
-        DBG_PRINT("[CMD] New trajectory length: ");
-        DBG_PRINTLN(trajectory->length);
-
-        if (trajectory->length == 0)
-        {
-            DBG_PRINTLN("[CMD] Trajectory length is 0, discarding");
-            delete trajectory;
-            trajectory = nullptr;
-            client_com.send_packet(Byte::Address::MASTER, Byte::Command::NACK);
-            break;
-        }
-        else
-        {
-            DBG_PRINTLN("[CMD] Trajectory:");
-            for (size_t i = 0; i < trajectory->length; ++i)
-            {
-                DBG_PRINT("[CMD] Waypoint ");
-                DBG_PRINT(i);
-                DBG_PRINT(": pos=");
-                DBG_PRINT(trajectory->waypoints[i].position, 6);
-                DBG_PRINT(", vel=");
-                DBG_PRINT(trajectory->waypoints[i].velocity, 6);
-                DBG_PRINT(", time=");
-                DBG_PRINTLN(trajectory->waypoints[i].timestamp);
-            }
-        }
+        RobotTrajectory trajectory(payload, payload_len);
 
         bool result = load_traj(trajectory);
         uint8_t response;
