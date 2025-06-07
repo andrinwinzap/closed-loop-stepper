@@ -182,7 +182,7 @@ void setup()
 
         if (!encoder.begin())
         {
-            DBG_PRINTLN("[SETUP] AS5600 not found!");
+            DBG_PRINTLN("[SETUP] Failed to start AS5600!!");
             while (1)
                 ;
         }

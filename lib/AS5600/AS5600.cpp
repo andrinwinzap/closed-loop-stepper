@@ -9,7 +9,7 @@ bool AS5600::begin()
 
     uint8_t status = read8(0x0B);
 
-    if (status == 0xFF)
+    if (status == 0xFF || (status & (1 << 5)) == 0)
     {
         return false;
     }
