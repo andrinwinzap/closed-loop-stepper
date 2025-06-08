@@ -144,7 +144,17 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         }
         case ControlLoop::State::TRAJECTORY:
         {
-            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::EXECUTING_TRAJECTORY);
+            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::TRAJECTORY);
+            break;
+        }
+        case ControlLoop::State::POSITION:
+        {
+            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::POSITION);
+            break;
+        }
+        case ControlLoop::State::ESTOP:
+        {
+            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::ESTOP);
             break;
         }
         default:

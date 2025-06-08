@@ -39,7 +39,9 @@ namespace Byte
         {
             IDLE = 0x01,
             HOMING = 0x02,
-            EXECUTING_TRAJECTORY = 0x03,
+            TRAJECTORY = 0x03,
+            POSITION = 0x04,
+            ESTOP = 0x05
         };
     }
 
