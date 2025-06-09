@@ -18,19 +18,30 @@ namespace Byte
 
     namespace Command
     {
-        enum : uint8_t
+        namespace Controller
         {
-            PING = 0x01,
-            HOME = 0x02,
-            POS = 0x03,
-            LOAD_TRAJ = 0x04,
-            EXEC_TRAJ = 0x05,
-            FINISHED = 0x06,
-            STATUS = 0x07,
-            ESTOP = 0x08,
-            ACK = 0xEE,
-            NACK = 0xFF
-        };
+            enum : uint8_t
+            {
+                POS = 0x01,
+                TRAJ = 0x02,
+                ESTOP = 0x03,
+                ACK = 0xEE,
+                NACK = 0xFF
+            };
+        }
+
+        namespace Actuator
+        {
+            enum : uint8_t
+            {
+                STATUS = 0x01,
+                LOAD_TRAJ = 0x02,
+                EXEC_TRAJ = 0x03,
+                ESTOP = 0x04,
+                ACK = 0xEE,
+                NACK = 0xFF
+            };
+        }
     }
 
     namespace Status

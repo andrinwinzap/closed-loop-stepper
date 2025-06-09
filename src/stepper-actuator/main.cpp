@@ -40,15 +40,15 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 {
     switch (cmd)
     {
-    case Byte::Command::ESTOP:
+    case Byte::Command::Actuator::ESTOP:
     {
         DBG_PRINTLN("[CMD] ESTOP");
         if (!DUMMY_MODE)
             control_loop_flag = ControlLoop::Flag::ESTOP;
-        master_com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
+        master_com.send_packet(Byte::Address::MASTER, Byte::Command::Actuator::ACK);
         break;
     }
-    case Byte::Command::LOAD_TRAJ:
+    case Byte::Command::Actuator::LOAD_TRAJ:
     {
         DBG_PRINTLN("[CMD] LOAD_TRAJ");
 
@@ -85,10 +85,10 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
             }
         }
 
-        master_com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
+        master_com.send_packet(Byte::Address::MASTER, Byte::Command::Actuator::ACK);
         break;
     }
-    case Byte::Command::EXEC_TRAJ:
+    case Byte::Command::Actuator::EXEC_TRAJ:
     {
         DBG_PRINTLN("[CMD] EXEC_TRAJ");
 
@@ -101,10 +101,10 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         if (!DUMMY_MODE)
             control_loop_flag = ControlLoop::Flag::TRAJECTORY;
         DBG_PRINTLN("[CMD] Trajectory execution triggered");
-        master_com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
+        master_com.send_packet(Byte::Address::MASTER, Byte::Command::Actuator::ACK);
         break;
     }
-    case Byte::Command::STATUS:
+    case Byte::Command::Actuator::STATUS:
     {
         uint8_t payload[5];
         float pos;
@@ -119,31 +119,31 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         {
 
             payload[0] = Byte::Status::IDLE;
-            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, payload, 5);
+            master_com.send_packet(Byte::Address::MASTER, Byte::Command::Actuator::STATUS, payload, 5);
             break;
         }
         case ControlLoop::State::HOMING:
         {
             payload[0] = Byte::Status::HOMING;
-            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, payload, 5);
+            master_com.send_packet(Byte::Address::MASTER, Byte::Command::Actuator::STATUS, payload, 5);
             break;
         }
         case ControlLoop::State::TRAJECTORY:
         {
             payload[0] = Byte::Status::TRAJECTORY;
-            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, payload, 5);
+            master_com.send_packet(Byte::Address::MASTER, Byte::Command::Actuator::STATUS, payload, 5);
             break;
         }
         case ControlLoop::State::POSITION:
         {
             payload[0] = Byte::Status::POSITION;
-            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, payload, 5);
+            master_com.send_packet(Byte::Address::MASTER, Byte::Command::Actuator::STATUS, payload, 5);
             break;
         }
         case ControlLoop::State::ESTOP:
         {
             payload[0] = Byte::Status::ESTOP;
-            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, payload, 5);
+            master_com.send_packet(Byte::Address::MASTER, Byte::Command::Actuator::STATUS, payload, 5);
             break;
         }
         default:

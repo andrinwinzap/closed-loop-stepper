@@ -56,7 +56,7 @@ void actuator_status_loop(void *)
         {
             xSemaphoreTake(actuator_com_mutex, portMAX_DELAY);
             mux.channel(Byte::mux_channel(address));
-            actuator_com.send_packet(address, Byte::Command::STATUS);
+            actuator_com.send_packet(address, Byte::Command::Actuator::STATUS);
             packet_sent = true;
             packet_timestamp = millis();
         }
@@ -66,7 +66,7 @@ void actuator_status_loop(void *)
         if (actuator_com.available())
         {
             const Command *cmd = actuator_com.read();
-            if (cmd && cmd->cmd == Byte::Command::STATUS)
+            if (cmd && cmd->cmd == Byte::Command::Actuator::STATUS)
             {
                 switch (address)
                 {
@@ -128,7 +128,7 @@ void actuator_status_loop(void *)
 bool estop(uint8_t addr)
 {
     mux.channel(Byte::mux_channel(addr));
-    actuator_com.send_packet(addr, Byte::Command::ESTOP);
+    actuator_com.send_packet(addr, Byte::Command::Actuator::ESTOP);
     unsigned long start = millis();
     while (millis() - start < SERIAL_PROTOCOL_TIMEOUT)
     {
@@ -138,9 +138,9 @@ bool estop(uint8_t addr)
             const Command *cmd = actuator_com.read();
             if (cmd)
             {
-                if (cmd->cmd == Byte::Command::ACK)
+                if (cmd->cmd == Byte::Command::Actuator::ACK)
                     return true;
-                else if (cmd->cmd == Byte::Command::NACK)
+                else if (cmd->cmd == Byte::Command::Actuator::NACK)
                     return false;
             }
         }
@@ -165,7 +165,7 @@ bool load_traj(uint8_t addr, ActuatorTrajectory &trajectory)
     uint16_t payload_len = 1 + trajectory.length * 12;
     uint8_t payload[payload_len];
     trajectory.serialize(payload, payload_len);
-    actuator_com.send_packet(addr, Byte::Command::LOAD_TRAJ, payload, payload_len);
+    actuator_com.send_packet(addr, Byte::Command::Actuator::LOAD_TRAJ, payload, payload_len);
     unsigned long start = millis();
     while (millis() - start < SERIAL_PROTOCOL_TIMEOUT)
     {
@@ -175,9 +175,9 @@ bool load_traj(uint8_t addr, ActuatorTrajectory &trajectory)
             const Command *cmd = actuator_com.read();
             if (cmd)
             {
-                if (cmd->cmd == Byte::Command::ACK)
+                if (cmd->cmd == Byte::Command::Actuator::ACK)
                     return true;
-                else if (cmd->cmd == Byte::Command::NACK)
+                else if (cmd->cmd == Byte::Command::Actuator::NACK)
                     return false;
             }
         }
@@ -200,33 +200,33 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 {
     switch (cmd)
     {
-    case Byte::Command::ESTOP:
+    case Byte::Command::Controller::ESTOP:
     {
         DBG_PRINTLN("[CMD] ESTOP");
         bool result = estop();
         uint8_t response;
         if (result)
         {
-            response = Byte::Command::ACK;
+            response = Byte::Command::Controller::ACK;
         }
         else
         {
-            response = Byte::Command::NACK;
+            response = Byte::Command::Controller::NACK;
         }
         client_com.send_packet(Byte::Address::BROADCAST, response);
         break;
     }
-    case Byte::Command::POS:
+    case Byte::Command::Controller::POS:
     {
         DBG_PRINTLN("[CMD] POS");
         uint8_t payload[24];
         robot_position.serialize(payload, 24);
-        client_com.send_packet(Byte::Address::BROADCAST, Byte::Command::POS, payload, 24);
+        client_com.send_packet(Byte::Address::BROADCAST, Byte::Command::Controller::POS, payload, 24);
         break;
     }
-    case Byte::Command::LOAD_TRAJ:
+    case Byte::Command::Controller::TRAJ:
     {
-        DBG_PRINTLN("[CMD] LOAD_TRAJ");
+        DBG_PRINTLN("[CMD] TRAJ");
 
         RobotTrajectory trajectory(payload, payload_len);
 
@@ -234,20 +234,14 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
         uint8_t response;
         if (result)
         {
-            response = Byte::Command::ACK;
+            actuator_com.send_packet(Byte::Address::BROADCAST, Byte::Command::Actuator::EXEC_TRAJ);
+            response = Byte::Command::Controller::ACK;
         }
         else
         {
-            response = Byte::Command::NACK;
+            response = Byte::Command::Controller::NACK;
         }
         client_com.send_packet(Byte::Address::BROADCAST, response);
-        break;
-    }
-    case Byte::Command::EXEC_TRAJ:
-    {
-        DBG_PRINTLN("[CMD] EXEC_TRAJ");
-        actuator_com.send_packet(Byte::Address::BROADCAST, Byte::Command::EXEC_TRAJ);
-        client_com.send_packet(Byte::Address::BROADCAST, Byte::Command::ACK);
         break;
     }
 
