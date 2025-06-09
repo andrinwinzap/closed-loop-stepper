@@ -99,7 +99,25 @@ void actuator_status_loop(void *)
         }
         else if (millis() - packet_timestamp > SERIAL_PROTOCOL_TIMEOUT)
         {
-            DBG_PRINTLN("ACTUATOR STATUS LOOP TIMED OUT");
+            DBG_PRINT("Actuator ");
+            switch (address)
+            {
+            case Byte::Address::ACTUATOR_1:
+                DBG_PRINT("1");
+                break;
+            case Byte::Address::ACTUATOR_2:
+                DBG_PRINT("2");
+                break;
+            case Byte::Address::ACTUATOR_3:
+                DBG_PRINT("3");
+                break;
+            case Byte::Address::ACTUATOR_4:
+                DBG_PRINT("4");
+                break;
+            default:
+                break;
+            }
+            DBG_PRINTLN(" disconnected!");
             packet_sent = false;
             xSemaphoreGive(actuator_com_mutex);
         }
