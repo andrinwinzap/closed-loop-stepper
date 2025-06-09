@@ -178,40 +178,6 @@ bool load_traj(RobotTrajectory &trajectory)
            load_traj(Byte::Address::ACTUATOR_4, trajectory.actuator_4);
 }
 
-bool exec_traj(uint8_t addr)
-{
-    mux.channel(Byte::mux_channel(addr));
-    actuator_com.send_packet(addr, Byte::Command::EXEC_TRAJ);
-    unsigned long start = millis();
-    while (millis() - start < SERIAL_PROTOCOL_TIMEOUT)
-    {
-        read_actuator_com_serial();
-        if (actuator_com.available())
-        {
-            const Command *cmd = actuator_com.read();
-            if (cmd)
-            {
-                if (cmd->cmd == Byte::Command::ACK)
-                    return true;
-                else if (cmd->cmd == Byte::Command::NACK)
-                    return false;
-            }
-        }
-    }
-    DBG_PRINT("[CMD] Exec trajectory on address: ");
-    DBG_PRINT(addr);
-    DBG_PRINTLN(" timed out.");
-    return false;
-}
-
-bool exec_traj()
-{
-    return exec_traj(Byte::Address::ACTUATOR_1) &&
-           exec_traj(Byte::Address::ACTUATOR_2) &&
-           exec_traj(Byte::Address::ACTUATOR_3) &&
-           exec_traj(Byte::Address::ACTUATOR_4);
-}
-
 void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 {
     switch (cmd)
@@ -262,17 +228,8 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
     case Byte::Command::EXEC_TRAJ:
     {
         DBG_PRINTLN("[CMD] EXEC_TRAJ");
-        bool result = exec_traj();
-        uint8_t response;
-        if (result)
-        {
-            response = Byte::Command::ACK;
-        }
-        else
-        {
-            response = Byte::Command::NACK;
-        }
-        client_com.send_packet(Byte::Address::BROADCAST, response);
+        actuator_com.send_packet(Byte::Address::BROADCAST, Byte::Command::EXEC_TRAJ);
+        client_com.send_packet(Byte::Address::BROADCAST, Byte::Command::ACK);
         break;
     }
 
