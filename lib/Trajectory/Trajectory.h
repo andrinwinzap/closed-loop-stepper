@@ -65,6 +65,16 @@ struct RobotPosition
     size_t serialize(uint8_t *outBuffer, size_t maxLen) const;
 };
 
+struct RobotStatus
+{
+    uint8_t actuator_1;
+    uint8_t actuator_2;
+    uint8_t actuator_3;
+    uint8_t actuator_4;
+    uint8_t actuator_5;
+    uint8_t actuator_6;
+};
+
 float hermite_interpolate(const Waypoint &wp1,
                           const Waypoint &wp2,
                           unsigned long elapsed);
