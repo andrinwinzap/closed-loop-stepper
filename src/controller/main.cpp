@@ -107,77 +107,6 @@ void actuator_status_loop(void *)
     }
 }
 
-bool ping(uint8_t addr)
-{
-    mux.channel(Byte::mux_channel(addr));
-    actuator_com.send_packet(addr, Byte::Command::PING);
-    unsigned long start = millis();
-    while (millis() - start < SERIAL_PROTOCOL_TIMEOUT)
-    {
-        read_actuator_com_serial();
-        if (actuator_com.available())
-        {
-            const Command *cmd = actuator_com.read();
-            if (cmd)
-            {
-                if (cmd->cmd == Byte::Command::ACK)
-                    return true;
-                else if (cmd->cmd == Byte::Command::NACK)
-                    return false;
-            }
-        }
-    }
-    DBG_PRINT("[CMD] Ping on address: ");
-    DBG_PRINT(addr);
-    DBG_PRINTLN(" timed out.");
-    return false;
-}
-
-bool ping()
-{
-    return ping(Byte::Address::ACTUATOR_1) &&
-           ping(Byte::Address::ACTUATOR_2) &&
-           ping(Byte::Address::ACTUATOR_3) &&
-           ping(Byte::Address::ACTUATOR_4);
-}
-
-bool pos(uint8_t addr, float &position)
-{
-    mux.channel(Byte::mux_channel(addr));
-    actuator_com.send_packet(addr, Byte::Command::POS);
-    unsigned long start = millis();
-    while (millis() - start < SERIAL_PROTOCOL_TIMEOUT)
-    {
-        read_actuator_com_serial();
-        if (actuator_com.available())
-        {
-            const Command *cmd = actuator_com.read();
-            if (cmd)
-            {
-                if (cmd->cmd == Byte::Command::POS)
-                {
-                    position = readFloatLE(cmd->payload);
-                    return true;
-                }
-                else if (cmd->cmd == Byte::Command::NACK)
-                    return false;
-            }
-        }
-    }
-    DBG_PRINT("[CMD] Pos on address: ");
-    DBG_PRINT(addr);
-    DBG_PRINTLN(" timed out.");
-    return false;
-}
-
-bool pos(RobotPosition &robot_position)
-{
-    return pos(Byte::Address::ACTUATOR_1, robot_position.theta_1) &&
-           pos(Byte::Address::ACTUATOR_2, robot_position.theta_2) &&
-           pos(Byte::Address::ACTUATOR_3, robot_position.theta_3) &&
-           pos(Byte::Address::ACTUATOR_4, robot_position.theta_4);
-}
-
 bool estop(uint8_t addr)
 {
     mux.channel(Byte::mux_channel(addr));
@@ -287,22 +216,6 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 {
     switch (cmd)
     {
-    case Byte::Command::PING:
-    {
-        DBG_PRINTLN("[CMD] PING");
-        bool result = ping();
-        uint8_t response;
-        if (result)
-        {
-            response = Byte::Command::ACK;
-        }
-        else
-        {
-            response = Byte::Command::NACK;
-        }
-        client_com.send_packet(Byte::Address::BROADCAST, response);
-        break;
-    }
     case Byte::Command::ESTOP:
     {
         DBG_PRINTLN("[CMD] ESTOP");

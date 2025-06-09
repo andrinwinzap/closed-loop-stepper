@@ -40,35 +40,12 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
 {
     switch (cmd)
     {
-    case Byte::Command::PING:
-    {
-        DBG_PRINTLN("[CMD] PING");
-        master_com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
-        break;
-    }
-
     case Byte::Command::ESTOP:
     {
         DBG_PRINTLN("[CMD] ESTOP");
         if (!DUMMY_MODE)
             control_loop_flag = ControlLoop::Flag::ESTOP;
         master_com.send_packet(Byte::Address::MASTER, Byte::Command::ACK);
-        break;
-    }
-
-    case Byte::Command::POS:
-    {
-        DBG_PRINTLN("[CMD] POS");
-        float pos;
-        if (DUMMY_MODE)
-            pos = 123.456f;
-        else
-            pos = encoder.getPosition();
-        DBG_PRINT("[CMD] Encoder position: ");
-        DBG_PRINTLN(pos);
-        uint8_t payload[4];
-        writeFloatLE(payload, pos);
-        master_com.send_packet(Byte::Address::MASTER, Byte::Command::POS, payload, 4);
         break;
     }
     case Byte::Command::LOAD_TRAJ:
@@ -130,7 +107,12 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
     case Byte::Command::STATUS:
     {
         uint8_t payload[5];
-        writeFloatLE(&payload[1], encoder.getPosition());
+        float pos;
+        if (DUMMY_MODE)
+            pos = 123.456f;
+        else
+            pos = encoder.getPosition();
+        writeFloatLE(&payload[1], pos);
         switch (control_loop_state)
         {
         case ControlLoop::State::IDLE:
