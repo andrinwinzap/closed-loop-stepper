@@ -129,32 +129,39 @@ void parse_cmd(uint8_t cmd, const uint8_t *payload, size_t payload_len)
     }
     case Byte::Command::STATUS:
     {
-
+        uint8_t payload[5];
+        writeFloatLE(&payload[1], encoder.getPosition());
         switch (control_loop_state)
         {
         case ControlLoop::State::IDLE:
         {
-            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::IDLE);
+
+            payload[0] = Byte::Status::IDLE;
+            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, payload, 5);
             break;
         }
         case ControlLoop::State::HOMING:
         {
-            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::HOMING);
+            payload[0] = Byte::Status::HOMING;
+            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, payload, 5);
             break;
         }
         case ControlLoop::State::TRAJECTORY:
         {
-            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::TRAJECTORY);
+            payload[0] = Byte::Status::TRAJECTORY;
+            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, payload, 5);
             break;
         }
         case ControlLoop::State::POSITION:
         {
-            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::POSITION);
+            payload[0] = Byte::Status::POSITION;
+            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, payload, 5);
             break;
         }
         case ControlLoop::State::ESTOP:
         {
-            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, Byte::Status::ESTOP);
+            payload[0] = Byte::Status::ESTOP;
+            master_com.send_packet(Byte::Address::MASTER, Byte::Command::STATUS, payload, 5);
             break;
         }
         default:

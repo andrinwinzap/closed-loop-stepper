@@ -29,13 +29,18 @@ void client_com_write_callback(const uint8_t *data, size_t len)
 
 SerialProtocol actuator_com(PROTOCOL_ADDRESS, actuator_com_write_callback);
 SerialProtocol client_com(PROTOCOL_ADDRESS, client_com_write_callback);
+struct ActuatorStatus
+{
+    uint8_t status;
+    float position;
+};
 
 struct RobotStatus
 {
-    uint8_t actuator_1;
-    uint8_t actuator_2;
-    uint8_t actuator_3;
-    uint8_t actuator_4;
+    ActuatorStatus actuator_1;
+    ActuatorStatus actuator_2;
+    ActuatorStatus actuator_3;
+    ActuatorStatus actuator_4;
 } robot_status;
 
 SemaphoreHandle_t actuator_com_mutex;
@@ -75,20 +80,23 @@ void actuator_status_loop(void *)
             {
                 switch (address)
                 {
+                    ActuatorStatus status = {
+                        .status = cmd->payload[0],
+                        .position = readFloatLE(&cmd->payload[1])};
                 case Byte::Address::ACTUATOR_1:
-                    robot_status.actuator_1 = cmd->payload[0];
+                    robot_status.actuator_1 = status;
                     address = Byte::Address::ACTUATOR_2;
                     break;
                 case Byte::Address::ACTUATOR_2:
-                    robot_status.actuator_2 = cmd->payload[0];
+                    robot_status.actuator_2 = status;
                     address = Byte::Address::ACTUATOR_3;
                     break;
                 case Byte::Address::ACTUATOR_3:
-                    robot_status.actuator_3 = cmd->payload[0];
+                    robot_status.actuator_3 = status;
                     address = Byte::Address::ACTUATOR_4;
                     break;
                 case Byte::Address::ACTUATOR_4:
-                    robot_status.actuator_4 = cmd->payload[0];
+                    robot_status.actuator_4 = status;
                     address = Byte::Address::ACTUATOR_1;
                     break;
                 default:
