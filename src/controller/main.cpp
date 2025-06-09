@@ -30,12 +30,81 @@ void client_com_write_callback(const uint8_t *data, size_t len)
 SerialProtocol actuator_com(PROTOCOL_ADDRESS, actuator_com_write_callback);
 SerialProtocol client_com(PROTOCOL_ADDRESS, client_com_write_callback);
 
+struct RobotStatus
+{
+    uint8_t actuator_1;
+    uint8_t actuator_2;
+    uint8_t actuator_3;
+    uint8_t actuator_4;
+} robot_status;
+
+SemaphoreHandle_t actuator_com_mutex;
+
 void read_actuator_com_serial()
 {
     while (actuator_com_serial.available())
     {
         uint8_t c = actuator_com_serial.read();
         actuator_com.feed(c);
+    }
+}
+
+void actuator_status_loop(void *)
+{
+    uint8_t address = Byte::Address::ACTUATOR_1;
+    bool packet_sent = false;
+    unsigned long packet_timestamp;
+
+    for (;;)
+    {
+        if (!packet_sent)
+        {
+            xSemaphoreTake(actuator_com_mutex, portMAX_DELAY);
+            mux.channel(Byte::mux_channel(address));
+            actuator_com.send_packet(address, Byte::Command::STATUS);
+            packet_sent = true;
+            packet_timestamp = millis();
+        }
+
+        read_actuator_com_serial();
+
+        if (actuator_com.available())
+        {
+            const Command *cmd = actuator_com.read();
+            if (cmd && cmd->cmd == Byte::Command::STATUS)
+            {
+                switch (address)
+                {
+                case Byte::Address::ACTUATOR_1:
+                    robot_status.actuator_1 = cmd->payload[0];
+                    address = Byte::Address::ACTUATOR_2;
+                    break;
+                case Byte::Address::ACTUATOR_2:
+                    robot_status.actuator_2 = cmd->payload[0];
+                    address = Byte::Address::ACTUATOR_3;
+                    break;
+                case Byte::Address::ACTUATOR_3:
+                    robot_status.actuator_3 = cmd->payload[0];
+                    address = Byte::Address::ACTUATOR_4;
+                    break;
+                case Byte::Address::ACTUATOR_4:
+                    robot_status.actuator_4 = cmd->payload[0];
+                    address = Byte::Address::ACTUATOR_1;
+                    break;
+                default:
+                    break;
+                }
+                xSemaphoreGive(actuator_com_mutex);
+                packet_sent = false;
+            }
+        }
+        else if (millis() - packet_timestamp > SERIAL_PROTOCOL_TIMEOUT)
+        {
+            DBG_PRINTLN("ACTUATOR STATUS LOOP TIMED OUT");
+            packet_sent = false;
+            xSemaphoreGive(actuator_com_mutex);
+        }
+        vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
 
@@ -374,6 +443,19 @@ void setup()
     DBG_PRINT("[SETUP] TCP Server started on port ");
     DBG_PRINTLN(TCP_LISTEN_PORT);
 
+    actuator_com_mutex = xSemaphoreCreateMutex();
+    xSemaphoreGive(actuator_com_mutex);
+
+    xTaskCreatePinnedToCore(
+        actuator_status_loop, // function
+        "ActuatorStatusLoop", // name
+        4096,                 // stack
+        nullptr,              // params
+        1,                    // priority
+        nullptr,              // handle
+        0                     // CORE 0
+    );
+
     DBG_PRINTLN("[SETUP] Setup complete");
 }
 
@@ -413,7 +495,9 @@ void loop()
         const Command *cmd = client_com.read();
         if (cmd)
         {
+            xSemaphoreTake(actuator_com_mutex, portMAX_DELAY);
             parse_cmd(cmd->cmd, cmd->payload, cmd->payload_len);
+            xSemaphoreGive(actuator_com_mutex);
         }
     }
 
